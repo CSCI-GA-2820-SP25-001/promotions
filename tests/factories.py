@@ -3,18 +3,22 @@ Test Factory to make fake objects for testing
 """
 
 import factory
-from service.models import YourResourceModel
+from service.models import Promotion
 
 
-class YourResourceModelFactory(factory.Factory):
+class PromotionFactory(factory.Factory):
     """Creates fake pets that you don't have to feed"""
 
     class Meta:  # pylint: disable=too-few-public-methods
         """Maps factory to data model"""
 
-        model = YourResourceModel
+        model = Promotion
 
     id = factory.Sequence(lambda n: n)
     name = factory.Faker("first_name")
-
-    # Todo: Add your other attributes here...
+    promotion_id = factory.Faker("ean13")
+    start_date = factory.Faker("date_time")
+    end_date = factory.Faker("date_time")
+    promotion_type = factory.Faker("word")
+    promotion_amount = factory.Faker("random_number")
+    promotion_description = factory.Faker("text")
