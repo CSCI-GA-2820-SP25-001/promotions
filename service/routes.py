@@ -15,10 +15,10 @@
 ######################################################################
 
 """
-YourResourceModel Service
+Promotion Service
 
 This service implements a REST API that allows you to Create, Read, Update
-and Delete YourResourceModel
+and Delete Promotion
 """
 
 from flask import jsonify, request, url_for, abort

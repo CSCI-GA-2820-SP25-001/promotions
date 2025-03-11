@@ -15,6 +15,10 @@ class PromotionFactory(factory.Factory):
         model = Promotion
 
     id = factory.Sequence(lambda n: n)
-    name = factory.Faker("name")
-    address = factory.Faker("address")
-    email = factory.Faker("email")
+    name = factory.Faker("first_name")
+    promotion_id = factory.Faker("ean13")
+    start_date = factory.Faker("date_time")
+    end_date = factory.Faker("date_time")
+    promotion_type = factory.Faker("word")
+    promotion_amount = factory.Faker("random_number")
+    promotion_description = factory.Faker("text")

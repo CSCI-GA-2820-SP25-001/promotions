@@ -26,9 +26,13 @@ class Promotion(db.Model):
     # Table Schema
     ##################################################
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(63), nullable=False)
-    address = db.Column(db.String(63), nullable=False)
-    email = db.Column(db.String(63), nullable=False)
+    name = db.Column(db.String(63))
+    promotion_id = db.Column(db.String(63), nullable=False, unique=True)
+    start_date = db.Column(db.DateTime, nullable=False)
+    end_date = db.Column(db.DateTime, nullable=False)
+    promotion_type = db.Column(db.String(63), nullable=False)
+    promotion_amount = db.Column(db.Float, nullable=False)
+    promotion_description = db.Column(db.String(255), nullable=False)
 
     # Todo: Place the rest of your schema here...
 
@@ -77,8 +81,12 @@ class Promotion(db.Model):
         return {
             "id": self.id,
             "name": self.name,
-            "address": self.address,
-            "email": self.email,
+            "promotion_id": self.promotion_id,
+            "start_date": self.start_date,
+            "end_date": self.end_date,
+            "promotion_type": self.promotion_type,
+            "promotion_amount": self.promotion_amount,
+            "promotion_description": self.promotion_description,
         }
 
     def deserialize(self, data):
@@ -90,8 +98,12 @@ class Promotion(db.Model):
         """
         try:
             self.name = data["name"]
-            self.address = data["address"]
-            self.email = data["email"]
+            self.promotion_id = data["promotion_id"]
+            self.start_date = data["start_date"]
+            self.end_date = data["end_date"]
+            self.promotion_type = data["promotion_type"]
+            self.promotion_amount = data["promotion_amount"]
+            self.promotion_description = data["promotion_description"]
         except AttributeError as error:
             raise DataValidationError("Invalid attribute: " + error.args[0]) from error
         except KeyError as error:

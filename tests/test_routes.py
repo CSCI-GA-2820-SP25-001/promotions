@@ -16,6 +16,7 @@
 
 """
 TestPromotion API Service Test Suite
+TestPromotion API Service Test Suite
 """
 
 # pylint: disable=duplicate-code
