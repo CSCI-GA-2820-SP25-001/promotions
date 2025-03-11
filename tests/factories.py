@@ -20,5 +20,6 @@ class PromotionFactory(factory.Factory):
     start_date = factory.Faker("date_time")
     end_date = factory.Faker("date_time")
     promotion_type = factory.Faker("word")
+    #Can use an enumeration for promotion type like (BOGO- use a fuzzy choice)
     promotion_amount = factory.Faker("random_number")
     promotion_description = factory.Faker("text")

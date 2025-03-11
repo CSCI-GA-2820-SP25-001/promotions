@@ -25,16 +25,19 @@ from unittest import TestCase
 from wsgi import app
 from service.common import status
 from service.models import db, Promotion
+from .factories import PromotionFactory
 
 DATABASE_URI = os.getenv(
     "DATABASE_URI", "postgresql+psycopg://postgres:postgres@localhost:5432/testdb"
 )
 
+BASE_URL = "/promotions"
 
 ######################################################################
 #  T E S T   C A S E S
 ######################################################################
 # pylint: disable=too-many-public-methods
+
 class TestYourResourceService(TestCase):
     """REST API Server Tests"""
 
@@ -64,12 +67,38 @@ class TestYourResourceService(TestCase):
         db.session.remove()
 
     ######################################################################
-    #  P L A C E   T E S T   C A S E S   H E R E
+    #  P L A C E   T E S T   C 
+    # A S E S   H E R E
     ######################################################################
-
+    
     def test_index(self):
         """It should call the home page"""
         resp = self.client.get("/")
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
+ 
+    def test_update_promotion_name(self):
+        """It should Update an existing Promotion"""
+        # create a promotion to update
+        test_promotion = PromotionFactory()
+        response = self.client.post(BASE_URL, json=test_promotion.serialize())
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
-    # Todo: Add your test cases here...
+        # update the promotion
+        new_promotion = response.get_json()
+        logging.debug(new_promotion)
+        new_promotion["name"] = "some_new_promotion_name"
+        new_promotion["start_date"] = "2025-03-15T00:00:00"
+        new_promotion["end_date"] = "2025-03-20T00:00:00"
+        new_promotion["promotion_type"] = "unknown"
+        new_promotion["promotion_amount"] = 9999
+        new_promotion["promotion_description"] = "updated description"
+        
+        response = self.client.put(f"{BASE_URL}/{new_promotion['id']}", json=new_promotion)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        updated_promotion = response.get_json()
+        self.assertEqual(updated_promotion["name"], "some_new_promotion_name")
+        self.assertEqual(updated_promotion["start_date"], "2025-03-15T00:00:00")
+        self.assertEqual(updated_promotion["end_date"], "2025-03-20T00:00:00")
+        self.assertEqual(updated_promotion["promotion_type"], "unknown")
+        self.assertEqual(updated_promotion["promotion_amount"], 9999)
+        self.assertEqual(updated_promotion["promotion_description"], "updated description")
