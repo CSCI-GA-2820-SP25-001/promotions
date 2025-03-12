@@ -20,6 +20,7 @@ TestPromotion API Service Test Suite
 """
 
 # pylint: disable=duplicate-code
+from datetime import timezone
 import os
 import logging
 from unittest import TestCase
@@ -27,6 +28,7 @@ from wsgi import app
 from service.common import status
 from service.models import db, Promotion
 from .factories import PromotionFactory
+from email.utils import parsedate_to_datetime
 
 DATABASE_URI = os.getenv(
     "DATABASE_URI", "postgresql+psycopg://postgres:postgres@localhost:5432/testdb"
@@ -90,8 +92,22 @@ class TestPromotionService(TestCase):
         # Check the data is correct
         new_promotion = response.get_json()
         self.assertEqual(new_promotion["name"], test_promotion.name)
-        self.assertEqual(new_promotion["address"], test_promotion.address)
-        self.assertEqual(new_promotion["email"], test_promotion.email)
+        self.assertEqual(new_promotion["promotion_id"], test_promotion.promotion_id)
+        self.assertEqual(
+            parsedate_to_datetime(new_promotion["start_date"]).replace(microsecond=0),
+            test_promotion.start_date.replace(tzinfo=timezone.utc, microsecond=0),
+        )
+        self.assertEqual(
+            parsedate_to_datetime(new_promotion["end_date"]).replace(microsecond=0),
+            test_promotion.end_date.replace(tzinfo=timezone.utc, microsecond=0),
+        )
+        self.assertEqual(new_promotion["promotion_type"], test_promotion.promotion_type)
+        self.assertEqual(
+            new_promotion["promotion_amount"], test_promotion.promotion_amount
+        )
+        self.assertEqual(
+            new_promotion["promotion_description"], test_promotion.promotion_description
+        )
 
         # Check that the location header was correct
         # response = self.client.get(location)
