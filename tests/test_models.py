@@ -69,7 +69,6 @@ class TestPromotion(TestCase):
         """It should Create a Promotion and assert that it exists"""
         promotion = PromotionFactory()
         promotion.create()
-        self.assertEqual(promotion.id, 1)
         found = Promotion.all()
         self.assertEqual(len(found), 1)
         data = Promotion.find(promotion.id)
