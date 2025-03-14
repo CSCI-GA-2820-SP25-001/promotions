@@ -15,13 +15,15 @@
 ######################################################################
 
 """
-Test cases for Pet Model
+Test cases for Promotion Model
 """
 
 # pylint: disable=duplicate-code
+from datetime import datetime
 import os
 import logging
 from unittest import TestCase
+from unittest.mock import patch
 from wsgi import app
 from service.models import Promotion, DataValidationError, db
 from .factories import PromotionFactory
@@ -80,3 +82,140 @@ class TestPromotion(TestCase):
         self.assertEqual(data.promotion_type, promotion.promotion_type)
         self.assertEqual(data.promotion_amount, promotion.promotion_amount)
         self.assertEqual(data.promotion_description, promotion.promotion_description)
+
+    def test_serialize_a_promotion(self):
+        """It should serialize a Promotion"""
+        promotion = PromotionFactory()
+        data = promotion.serialize()
+
+        self.assertNotEqual(data, None)
+        self.assertIn("id", data)
+        self.assertEqual(data["id"], promotion.id)
+        self.assertIn("name", data)
+        self.assertEqual(data["name"], promotion.name)
+        self.assertIn("promotion_id", data)
+        self.assertEqual(data["promotion_id"], promotion.promotion_id)
+        self.assertIn("start_date", data)
+
+        self.assertEqual(data["start_date"], promotion.start_date.isoformat())
+
+        self.assertIn("end_date", data)
+        self.assertEqual(data["end_date"], promotion.end_date.isoformat())
+
+        self.assertIn("promotion_type", data)
+        self.assertEqual(data["promotion_type"], promotion.promotion_type)
+        self.assertIn("promotion_amount", data)
+        self.assertEqual(data["promotion_amount"], promotion.promotion_amount)
+        self.assertIn("promotion_description", data)
+        self.assertEqual(data["promotion_description"], promotion.promotion_description)
+
+    def test_deserialize_a_promotion(self):
+        """It should deserialize a Promotion"""
+        data = PromotionFactory().serialize()
+        promotion = Promotion()
+        promotion.deserialize(data)
+        print(f"Promotion: {promotion.promotion_amount}, Serialized Data: {data}")
+        self.assertNotEqual(data, None)
+        self.assertIn("id", data)
+        self.assertEqual(data["id"], promotion.id)
+        self.assertIn("name", data)
+        self.assertEqual(data["name"], promotion.name)
+        self.assertIn("promotion_id", data)
+        self.assertEqual(data["promotion_id"], promotion.promotion_id)
+        self.assertIn("start_date", data)
+        self.assertEqual(
+            promotion.start_date, datetime.fromisoformat(data["start_date"])
+        )  # Fix
+        self.assertIn("end_date", data)
+        self.assertEqual(
+            promotion.end_date, datetime.fromisoformat(data["end_date"])
+        )  # Fix
+        self.assertIn("promotion_type", data)
+        self.assertEqual(data["promotion_type"], promotion.promotion_type)
+        self.assertIn("promotion_amount", data)
+        self.assertEqual(data["promotion_amount"], promotion.promotion_amount)
+        self.assertIn("promotion_description", data)
+        self.assertEqual(data["promotion_description"], promotion.promotion_description)
+
+    def test_deserialize_missing_data(self):
+        """It should not deserialize a Promotion with missing data"""
+        data = {
+            "name": "Test Promotion",
+            "promotion_id": "123456789012",
+            "start_date": "2024-01-01T00:00:00Z",
+            "end_date": "2024-01-31T00:00:00Z",
+        }
+        promotion = Promotion()
+        self.assertRaises(DataValidationError, promotion.deserialize, data)
+
+    def test_deserialize_bad_data(self):
+        """It should not deserialize bad data"""
+        data = "this is not a dictionary"
+        promotion = Promotion()
+        self.assertRaises(DataValidationError, promotion.deserialize, data)
+
+    def test_deserialize_bad_available(self):  # need fix
+        """It should not deserialize a bad available attribute"""
+        test_promotion = PromotionFactory()
+        data = test_promotion.serialize()
+        data["promotion_amount"] = "not a number"
+        promotion = Promotion()
+        self.assertRaises(DataValidationError, promotion.deserialize, data)
+
+
+class TestExceptionHandlers(TestCase):
+    """Promotion Model Exception Handlers"""
+
+    @patch("service.models.db.session.commit")
+    def test_create_exception(self, exception_mock):
+        """It should catch a create exception"""
+        exception_mock.side_effect = Exception()
+        promotion = PromotionFactory()
+        self.assertRaises(DataValidationError, promotion.create)
+
+    @patch("service.models.db.session.commit")
+    def test_update_exception(self, exception_mock):
+        """It should catch a update exception"""
+        exception_mock.side_effect = Exception()
+        promotion = PromotionFactory()
+        self.assertRaises(DataValidationError, promotion.update)
+
+    @patch("service.models.db.session.commit")
+    def test_delete_exception(self, exception_mock):
+        """It should catch a delete exception"""
+        exception_mock.side_effect = Exception()
+        promotion = PromotionFactory()
+        self.assertRaises(DataValidationError, promotion.delete)
+
+
+# class TestModelQueries(TestCase):
+#     """Promotion Model Query Tests"""
+
+#     def test_find_promotion(self):
+#         """It should Find a Promotion by ID"""
+#         promotions = PromotionFactory.create_batch(5)
+#         for promotion in promotions:
+#             promotion.create()
+#         logging.debug(promotions)
+#         # make sure they got saved
+#         self.assertEqual(len(Promotion.all()), 5)
+#         # find the 2nd promotion in the list
+#         promotion = Promotion.find(promotions[1].id)
+#         self.assertIsNot(promotion, None)
+#         self.assertEqual(promotion.id, promotions[1].id)
+#         self.assertEqual(promotion.name, promotions[1].name)
+#         self.assertEqual(promotion.available, promotions[1].available)
+#         self.assertEqual(promotion.gender, promotions[1].gender)
+#         self.assertEqual(promotion.birthday, promotions[1].birthday)
+
+#     def test_find_by_name(self):
+#         """It should Find a Promotion by Name"""
+#         promotions = PromotionFactory.create_batch(10)
+#         for promotion in promotions:
+#             promotion.create()
+#         name = promotions[0].name
+#         count = len([promotion for promotion in promotions if promotion.name == name])
+#         found = Promotion.find_by_name(name)
+#         self.assertEqual(found.count(), count)
+#         for promotion in found:
+#             self.assertEqual(promotion.name, name)

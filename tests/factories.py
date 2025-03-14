@@ -7,7 +7,7 @@ from service.models import Promotion
 
 
 class PromotionFactory(factory.Factory):
-    """Creates fake pets that you don't have to feed"""
+    """Creates fake promotions that you don't have to feed"""
 
     class Meta:  # pylint: disable=too-few-public-methods
         """Maps factory to data model"""

@@ -88,8 +88,3 @@ def check_content_type(content_type) -> None:
         status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
         f"Content-Type must be {content_type}",
     )
-
-
-def error(status_code, reason):
-    app.logger.error(reason)
-    abort(status_code, reason)

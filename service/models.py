@@ -4,13 +4,33 @@ Models for Promotion
 All of the models are stored in this module
 """
 
+from datetime import datetime
 import logging
+import os
 from flask_sqlalchemy import SQLAlchemy
+from retry import retry
+
+# global variables for retry (must be int)
+RETRY_COUNT = int(os.environ.get("RETRY_COUNT", 5))
+RETRY_DELAY = int(os.environ.get("RETRY_DELAY", 1))
+RETRY_BACKOFF = int(os.environ.get("RETRY_BACKOFF", 2))
 
 logger = logging.getLogger("flask.app")
 
 # Create the SQLAlchemy object to be initialized later in init_db()
 db = SQLAlchemy()
+
+
+@retry(
+    Exception,
+    delay=RETRY_DELAY,
+    backoff=RETRY_BACKOFF,
+    tries=RETRY_COUNT,
+    logger=logger,
+)
+def init_db() -> None:
+    """Initialize Tables"""
+    db.create_all()
 
 
 class DataValidationError(Exception):
@@ -76,18 +96,20 @@ class Promotion(db.Model):
             logger.error("Error deleting record: %s", self)
             raise DataValidationError(e) from e
 
-    def serialize(self):
+    def serialize(self) -> dict:
         """Serializes a Promotion into a dictionary"""
         return {
             "id": self.id,
             "name": self.name,
             "promotion_id": self.promotion_id,
-            "start_date": self.start_date,
-            "end_date": self.end_date,
+            "start_date": self.start_date.isoformat(),
+            "end_date": self.end_date.isoformat(),
             "promotion_type": self.promotion_type,
             "promotion_amount": self.promotion_amount,
             "promotion_description": self.promotion_description,
         }
+
+    from datetime import datetime
 
     def deserialize(self, data):
         """
@@ -97,13 +119,36 @@ class Promotion(db.Model):
             data (dict): A dictionary containing the resource data
         """
         try:
+            if data.get("id") is not None:
+                self.id = int(data["id"])
+            else:
+                self.id = None
+
             self.name = data["name"]
             self.promotion_id = data["promotion_id"]
-            self.start_date = data["start_date"]
-            self.end_date = data["end_date"]
+
+            self.start_date = (
+                datetime.fromisoformat(data["start_date"])
+                if data.get("start_date")
+                else None
+            )
+            self.end_date = (
+                datetime.fromisoformat(data["end_date"])
+                if data.get("end_date")
+                else None
+            )
+
             self.promotion_type = data["promotion_type"]
-            self.promotion_amount = data["promotion_amount"]
+
+            if not isinstance(data["promotion_amount"], (int, float)):
+                raise DataValidationError(
+                    "Invalid type for promotion_amount. Expected a number."
+                )
+
+            self.promotion_amount = data["promotion_amount"]  # ✅ Now it is assigned
+
             self.promotion_description = data["promotion_description"]
+
         except AttributeError as error:
             raise DataValidationError("Invalid attribute: " + error.args[0]) from error
         except KeyError as error:
@@ -115,7 +160,8 @@ class Promotion(db.Model):
                 "Invalid Promotion: body of request contained bad or no data "
                 + str(error)
             ) from error
-        return self
+
+        return self  # Allow method chaining
 
     ##################################################
     # CLASS METHODS
