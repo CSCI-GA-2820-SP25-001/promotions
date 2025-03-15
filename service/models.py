@@ -1,5 +1,9 @@
 """
+<<<<<<< Updated upstream
 Models for Promotion
+=======
+Models for Promotions
+>>>>>>> Stashed changes
 
 All of the models are stored in this module
 """
@@ -34,7 +38,7 @@ def init_db() -> None:
 
 
 class DataValidationError(Exception):
-    """Used for an data validation errors when deserializing"""
+    """Used for data validation errors when deserializing"""
 
 
 class Promotion(db.Model):
@@ -46,6 +50,7 @@ class Promotion(db.Model):
     # Table Schema
     ##################################################
     id = db.Column(db.Integer, primary_key=True)
+<<<<<<< Updated upstream
     name = db.Column(db.String(63))
     promotion_id = db.Column(db.String(63), nullable=False, unique=True)
     start_date = db.Column(db.DateTime, nullable=False)
@@ -55,16 +60,23 @@ class Promotion(db.Model):
     promotion_description = db.Column(db.String(255), nullable=False)
 
     # Todo: Place the rest of your schema here...
+=======
+    name = db.Column(db.String(63), nullable=False)
+>>>>>>> Stashed changes
 
     def __repr__(self):
         return f"<Promotion {self.name} id=[{self.id}]>"
 
     def create(self):
+<<<<<<< Updated upstream
         """
         Creates a Promotion to the database
         """
+=======
+        """Creates a Promotion in the database"""
+>>>>>>> Stashed changes
         logger.info("Creating %s", self.name)
-        self.id = None  # pylint: disable=invalid-name
+        self.id = None  # Ensures new record insertion
         try:
             db.session.add(self)
             db.session.commit()
@@ -74,10 +86,15 @@ class Promotion(db.Model):
             raise DataValidationError(e) from e
 
     def update(self):
+<<<<<<< Updated upstream
         """
         Updates a Promotion to the database
         """
         logger.info("Saving %s", self.name)
+=======
+        """Updates a Promotion in the database"""
+        logger.info("Updating %s", self.name)
+>>>>>>> Stashed changes
         try:
             db.session.commit()
         except Exception as e:
@@ -96,6 +113,7 @@ class Promotion(db.Model):
             logger.error("Error deleting record: %s", self)
             raise DataValidationError(e) from e
 
+<<<<<<< Updated upstream
     def serialize(self) -> dict:
         """Serializes a Promotion into a dictionary"""
         return {
@@ -118,6 +136,14 @@ class Promotion(db.Model):
         Args:
             data (dict): A dictionary containing the resource data
         """
+=======
+    def serialize(self):
+        """Serializes a Promotion into a dictionary"""
+        return {"id": self.id, "name": self.name}
+
+    def deserialize(self, data):
+        """Deserializes a Promotion from a dictionary"""
+>>>>>>> Stashed changes
         try:
             if data.get("id") is not None:
                 self.id = int(data["id"])
@@ -125,6 +151,7 @@ class Promotion(db.Model):
                 self.id = None
 
             self.name = data["name"]
+<<<<<<< Updated upstream
             self.promotion_id = data["promotion_id"]
 
             self.start_date = (
@@ -162,6 +189,11 @@ class Promotion(db.Model):
             ) from error
 
         return self  # Allow method chaining
+=======
+        except (AttributeError, KeyError, TypeError) as error:
+            raise DataValidationError(f"Invalid attribute: {error}") from error
+        return self
+>>>>>>> Stashed changes
 
     ##################################################
     # CLASS METHODS
@@ -169,12 +201,18 @@ class Promotion(db.Model):
 
     @classmethod
     def all(cls):
+<<<<<<< Updated upstream
         """Returns all of the Promotions in the database"""
         logger.info("Processing all Promotions")
+=======
+        """Returns all Promotions in the database"""
+        logger.info("Fetching all Promotions")
+>>>>>>> Stashed changes
         return cls.query.all()
 
     @classmethod
     def find(cls, by_id):
+<<<<<<< Updated upstream
         """Finds a Promotion by it's ID"""
         logger.info("Processing lookup for id %s ...", by_id)
         return cls.query.session.get(cls, by_id)
@@ -188,3 +226,14 @@ class Promotion(db.Model):
         """
         logger.info("Processing name query for %s ...", name)
         return cls.query.filter(cls.name == name)
+=======
+        """Finds a Promotion by its ID"""
+        logger.info("Fetching Promotion with ID: %s", by_id)
+        return cls.query.get(by_id)
+
+    @classmethod
+    def find_by_name(cls, name):
+        """Returns all Promotions with the given name"""
+        logger.info("Fetching Promotions with name: %s", name)
+        return cls.query.filter(cls.name == name).all()
+>>>>>>> Stashed changes

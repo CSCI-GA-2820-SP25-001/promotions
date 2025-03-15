@@ -7,7 +7,7 @@ from service.models import Promotion
 
 
 class PromotionFactory(factory.Factory):
-    """Creates fake promotions that you don't have to feed"""
+    """Creates fake pets that you don't have to feed"""
 
     class Meta:  # pylint: disable=too-few-public-methods
         """Maps factory to data model"""
@@ -16,9 +16,5 @@ class PromotionFactory(factory.Factory):
 
     id = factory.Sequence(lambda n: n)
     name = factory.Faker("first_name")
-    promotion_id = factory.Faker("ean13")
-    start_date = factory.Faker("date_time")
-    end_date = factory.Faker("date_time")
-    promotion_type = factory.Faker("word")
-    promotion_amount = factory.Faker("random_number")
-    promotion_description = factory.Faker("text")
+
+    # Todo: Add your other attributes here...

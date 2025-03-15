@@ -45,7 +45,7 @@ def index():
 
 
 @app.route("/promotions", methods=["POST"])
-def create_promotions():
+def create_promotion():
     """
     Create a Promotion
     This endpoint will create a Promotion based the data in the body that is posted
@@ -88,3 +88,8 @@ def check_content_type(content_type) -> None:
         status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
         f"Content-Type must be {content_type}",
     )
+
+
+def error(status_code, reason):
+    app.logger.error(reason)
+    abort(status_code, reason)
