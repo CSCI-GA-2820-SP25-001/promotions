@@ -30,6 +30,7 @@ from service.common import status
 from service.models import DataValidationError, db, Promotion
 from .factories import PromotionFactory
 from email.utils import parsedate_to_datetime
+from urllib.parse import quote_plus
 
 DATABASE_URI = os.getenv(
     "DATABASE_URI", "postgresql+psycopg://postgres:postgres@localhost:5432/testdb"
@@ -148,6 +149,12 @@ class TestPromotionService(TestCase):
         # self.assertEqual(new_promotion["address"], test_promotion.address)
         # self.assertEqual(new_promotion["email"], test_promotion.email)
 
+    def test_get_promotion_list(self):
+        """It should Get a list of promotion"""
+        self._create_promotions(5)
+        response = self.client.get(BASE_URL)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.get_json()
 
 class TestSadPaths(TestCase):
     """Test REST Exception Handling"""

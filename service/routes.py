@@ -88,3 +88,31 @@ def check_content_type(content_type) -> None:
         status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
         f"Content-Type must be {content_type}",
     )
+
+######################################################################
+# LIST ALL promotions
+######################################################################
+@app.route("/promotions", methods=["GET"])
+def list_promotions():
+    """Returns all of the Promotions"""
+    app.logger.info("Request for promotion list")
+
+    promotions = []
+
+    # Parse any arguments from the query string
+    id = request.args.get("id")
+    name = request.args.get("name")
+
+    if id:
+        app.logger.info("Find by id: %s", id)
+        promotions = Promotion.find(id)
+    elif name:
+        app.logger.info("Find by name: %s", name)
+        promotions = Promotion.find_by_name(name)
+    else:
+        app.logger.info("Find all")
+        promotions = Promotion.all()
+
+    results = [promotion.serialize() for promotion in promotions]
+    app.logger.info("Returning %d promotions", len(results))
+    return jsonify(results), status.HTTP_200_OK
