@@ -30,7 +30,6 @@ from service.common import status
 from service.models import DataValidationError, db, Promotion
 from .factories import PromotionFactory
 from email.utils import parsedate_to_datetime
-from urllib.parse import quote_plus
 
 DATABASE_URI = os.getenv(
     "DATABASE_URI", "postgresql+psycopg://postgres:postgres@localhost:5432/testdb"
