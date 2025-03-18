@@ -140,6 +140,22 @@ class TestPromotionService(TestCase):
             new_promotion["promotion_description"], test_promotion.promotion_description
         )
 
+    def test_delete_promotions(self):
+        """It should Delete a Promotion"""
+        test_promotions = self._create_promotions(1)[0]
+        response = self.client.delete(f"{BASE_URL}/{test_promotions.id}")
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(len(response.data), 0)
+        # make sure they are deleted
+        response = self.client.get(f"{BASE_URL}/{test_promotions.id}")
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_delete_non_existing_promotions(self):
+        """It should Delete a Promotion even if it doesn't exist"""
+        response = self.client.delete(f"{BASE_URL}/0")
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(len(response.data), 0)
+
         # Check that the location header was correct
         # response = self.client.get(location)
         # self.assertEqual(response.status_code, status.HTTP_200_OK)

@@ -88,3 +88,43 @@ def check_content_type(content_type) -> None:
         status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
         f"Content-Type must be {content_type}",
     )
+
+
+@app.route("/promotions/<int:promotion_id>", methods=["DELETE"])
+def delete_promotions(promotion_id):
+    """
+    Delete a Promotion
+
+    This endpoint will delete a Promotion based the id specified in the path
+    """
+    app.logger.info("Request to Delete a promotion with id [%s]", promotion_id)
+
+    # Delete the Promotion if it exists
+    promotion = Promotion.find(promotion_id)
+    if promotion:
+        app.logger.info("Promotion with ID: %d found.", promotion.id)
+        promotion.delete()
+
+    app.logger.info("Promotion with ID: %d delete complete.", promotion_id)
+    return {}, status.HTTP_204_NO_CONTENT
+
+
+@app.route("/promotions/<int:promotion_id>", methods=["GET"])
+def get_promotions(promotion_id):
+    """
+    Retrieve a single Promotion
+
+    This endpoint will return a Promotion based on its id
+    """
+    app.logger.info("Request to Retrieve a promotion with id [%s]", promotion_id)
+
+    # Attempt to find the Promotion and abort if not found
+    promotion = Promotion.find(promotion_id)
+    if not promotion:
+        abort(
+            status.HTTP_404_NOT_FOUND,
+            f"Promotion with id '{promotion_id}' was not found.",
+        )
+
+    app.logger.info("Returning promotion: %s", promotion.name)
+    return jsonify(promotion.serialize()), status.HTTP_200_OK
