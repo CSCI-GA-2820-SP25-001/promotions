@@ -32,9 +32,25 @@ from service.common import status  # HTTP Status Codes
 ######################################################################
 @app.route("/")
 def index():
-    """Root URL response"""
+    """Root URL response with API metadata"""
     return (
-        "Reminder: return some useful information in json format about the service here",
+        jsonify(
+            name="Promotion Demo REST API Service",
+            version="1.0",
+            paths={
+                "list_promotions": url_for("list_promotions", _external=True),
+                "create_promotion": url_for("create_promotions", _external=True),
+                "update_promotion": url_for(
+                    "update_promotion", promotion_id=1, _external=True
+                ),
+                "delete_promotion": url_for(
+                    "delete_promotions", promotion_id=1, _external=True
+                ),
+                "get_promotion": url_for(
+                    "get_promotions", promotion_id=1, _external=True
+                ),
+            },
+        ),
         status.HTTP_200_OK,
     )
 
@@ -129,6 +145,7 @@ def get_promotions(promotion_id):
     app.logger.info("Returning promotion: %s", promotion.name)
     return jsonify(promotion.serialize()), status.HTTP_200_OK
 
+
 @app.route("/promotions/<int:promotion_id>", methods=["PUT"])
 def update_promotion(promotion_id):
     """
@@ -139,11 +156,14 @@ def update_promotion(promotion_id):
 
     promotion = Promotion.find(promotion_id)
     if not promotion:
-        abort(status.HTTP_404_NOT_FOUND, f"Promotion with id '{promotion_id}' was not found.")
+        abort(
+            status.HTTP_404_NOT_FOUND,
+            f"Promotion with id '{promotion_id}' was not found.",
+        )
 
     promotion.deserialize(request.get_json())
     promotion.update()
-    
+
     return jsonify(promotion.serialize()), status.HTTP_200_OK
 
 
