@@ -181,6 +181,12 @@ class TestPromotionService(TestCase):
         # self.assertEqual(new_promotion["address"], test_promotion.address)
         # self.assertEqual(new_promotion["email"], test_promotion.email)
 
+    def test_get_promotion_list(self):
+        """It should Get a list of promotion"""
+        self._create_promotions(5)
+        response = self.client.get(BASE_URL)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.get_json()
 
 class TestSadPaths(TestCase):
     """Test REST Exception Handling"""
@@ -245,6 +251,17 @@ class TestSadPaths(TestCase):
         self.assertEqual(
             updated_promotion["promotion_description"], "Updated Description"
         )
+
+    def test_get_promotion_list_non_existent_name(self):
+        """
+        It should return a 200 with an empty list if the requested name doesn't exist.
+        (Current code doesn't raise a 404 if the name is not found.)
+        """
+        response = self.client.get(f"{BASE_URL}?name=NoSuchNameExists")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.get_json()
+        self.assertIsInstance(data, list)
+        self.assertEqual(len(data), 0, "Expected an empty list for a non-existent name")
 
     ######################################################################
     #  T E S T   M O C K S
