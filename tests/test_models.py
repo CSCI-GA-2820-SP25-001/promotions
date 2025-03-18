@@ -161,7 +161,37 @@ class TestPromotion(TestCase):
         data["promotion_amount"] = "not a number"
         promotion = Promotion()
         self.assertRaises(DataValidationError, promotion.deserialize, data)
+  ##Add this!
+    def test_update_a_promotion(self):
+        """It should Update a Promotion"""
+        promotion = PromotionFactory()
+        logging.debug(promotion)
+        promotion.create()
+        logging.debug(promotion)
+        self.assertIsNotNone(promotion.id)
 
+        # Change values and save
+        promotion.name = "Updated Promotion Name"
+        promotion.promotion_id = "Updated ID"
+        promotion.start_date = datetime(2025, 3, 15, 0, 0)
+        promotion.end_date = datetime(2025, 3, 20, 0, 0)
+        promotion.promotion_type = "discount"
+        promotion.promotion_amount = 9999
+        promotion.promotion_description = "Updated Description"
+
+        original_id = promotion.id
+        promotion.update()
+
+        # Fetch and verify changes
+        updated_promotion = Promotion.find(promotion.id)
+        self.assertEqual(updated_promotion.id, original_id)
+        self.assertEqual(updated_promotion.name, "Updated Promotion Name")
+        self.assertEqual(updated_promotion.promotion_id, "Updated ID")
+        self.assertEqual(updated_promotion.start_date, datetime(2025, 3, 15, 0, 0))
+        self.assertEqual(updated_promotion.end_date, datetime(2025, 3, 20, 0, 0))
+        self.assertEqual(updated_promotion.promotion_type, "discount")
+        self.assertEqual(updated_promotion.promotion_amount, 9999)
+        self.assertEqual(updated_promotion.promotion_description, "Updated Description")
 
 class TestExceptionHandlers(TestCase):
     """Promotion Model Exception Handlers"""
@@ -186,6 +216,7 @@ class TestExceptionHandlers(TestCase):
         exception_mock.side_effect = Exception()
         promotion = PromotionFactory()
         self.assertRaises(DataValidationError, promotion.delete)
+
 
 
 # class TestModelQueries(TestCase):

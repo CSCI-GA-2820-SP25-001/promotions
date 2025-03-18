@@ -197,6 +197,34 @@ class TestSadPaths(TestCase):
         response = self.client.get("/promotions/0")
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertIn("Not Found", str(response.data))
+    
+    #Add this
+    def test_update_promotion(self):
+        """It should Update an existing Promotion"""
+        # Create a promotion first
+        test_promotion = PromotionFactory()
+        response = self.client.post(BASE_URL, json=test_promotion.serialize())
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        # Modify the promotion data
+        new_promotion = response.get_json()
+        logging.debug(new_promotion)
+        new_promotion["name"] = "Updated Promotion Name"
+        new_promotion["promotion_amount"] = 9999
+        new_promotion["promotion_type"] = "special"
+        new_promotion["promotion_description"] = "Updated Description"
+
+        # Send an update request
+        response = self.client.put(f"{BASE_URL}/{new_promotion['id']}", json=new_promotion)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        # Verify the response
+        updated_promotion = response.get_json()
+        self.assertEqual(updated_promotion["name"], "Updated Promotion Name")
+        self.assertEqual(updated_promotion["promotion_amount"], 9999)
+        self.assertEqual(updated_promotion["promotion_type"], "special")
+        self.assertEqual(updated_promotion["promotion_description"], "Updated Description")
+
 
     ######################################################################
     #  T E S T   M O C K S

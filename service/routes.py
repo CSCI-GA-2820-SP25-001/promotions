@@ -128,3 +128,21 @@ def get_promotions(promotion_id):
 
     app.logger.info("Returning promotion: %s", promotion.name)
     return jsonify(promotion.serialize()), status.HTTP_200_OK
+
+@app.route("/promotions/<int:promotion_id>", methods=["PUT"])
+def update_promotion(promotion_id):
+    """
+    Update an existing Promotion
+    """
+    app.logger.info("Request to update Promotion with id: %s", promotion_id)
+    check_content_type("application/json")
+
+    promotion = Promotion.find(promotion_id)
+    if not promotion:
+        abort(status.HTTP_404_NOT_FOUND, f"Promotion with id '{promotion_id}' was not found.")
+
+    promotion.deserialize(request.get_json())
+    promotion.update()
+    
+    return jsonify(promotion.serialize()), status.HTTP_200_OK
+
