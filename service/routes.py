@@ -33,8 +33,18 @@ from service.common import status  # HTTP Status Codes
 @app.route("/")
 def index():
     """Root URL response"""
+    app.logger.info("Request for Root URL")
     return (
-        "Reminder: return some useful information in json format about the service here",
+        jsonify(
+            name="Promotion Demo REST API Service",
+            version="1.0",
+            paths={
+                "list_promotions": url_for(
+                    "get_promotions", promotion_id=1, _external=True
+                ),
+                "create_promotion": url_for("create_promotions", _external=True),
+            },
+        ),
         status.HTTP_200_OK,
     )
 
