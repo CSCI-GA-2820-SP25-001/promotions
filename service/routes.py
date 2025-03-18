@@ -25,6 +25,7 @@ from flask import jsonify, request, url_for, abort
 from flask import current_app as app  # Import Flask application
 from service.models import Promotion
 from service.common import status  # HTTP Status Codes
+from datetime import datetime, timezone
 
 
 ######################################################################
@@ -48,20 +49,19 @@ def index():
 def create_promotion():
     """
     Create a Promotion
-    This endpoint will create a Promotion based the data in the body that is posted
+    This endpoint will create a Promotion based on the data in the body that is posted.
     """
     app.logger.info("Request to Create a Promotion...")
     check_content_type("application/json")
 
     promotion = Promotion()
-    # Get the data from the request and deserialize it
+    # Get the data from the request and deserialize it.
     promotion.deserialize(request.get_json())
     promotion.create()
     message = promotion.serialize()
     app.logger.info("Promotion with new id [%s] saved!", promotion.id)
 
-    # Return the location of the new Promotion
-    # location_url = url_for("get_promotions", promotion_id=promotion.id, _external=True)
+    # Return the location of the new Promotion.
     location_url = "unknown"
 
     return (
@@ -93,3 +93,27 @@ def check_content_type(content_type) -> None:
 def error(status_code, reason):
     app.logger.error(reason)
     abort(status_code, reason)
+
+
+@app.route("/promotions/<int:promotion_id>", methods=["GET"])
+def get_promotions(promotion_id):
+    """
+    Retrieve a single Promotion.
+    This endpoint returns a Promotion based on its id.
+    If the promotion's end_date is in the past, a "status": "expired" field is added to the returned JSON.
+    """
+    app.logger.info("Request to Retrieve a promotion with id [%s]", promotion_id)
+    promotion = Promotion.find(promotion_id)
+    if not promotion:
+        abort(
+            status.HTTP_404_NOT_FOUND,
+            f"Promotion with id '{promotion_id}' was not found.",
+        )
+    promotion_data = promotion.serialize()
+    # Ensure promotion.end_date is timezone-aware.
+    end_date = promotion.end_date
+    if end_date.tzinfo is None:
+        end_date = end_date.replace(tzinfo=timezone.utc)
+    if end_date < datetime.now(timezone.utc):
+        promotion_data["status"] = "expired"
+    return jsonify(promotion_data), status.HTTP_200_OK

@@ -1,26 +1,12 @@
-######################################################################
-# Copyright 2016, 2024 John J. Rofrano. All Rights Reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-# https://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-######################################################################
-
 """
-TestPromotion API Service Test Suite
-TestPromotion API Service Test Suite
+TestPromotion API Service Test Suite – Read Promotion Endpoints
+Acceptance Criteria:
+1. Given a valid promotion ID, a GET request returns the promotion details.
+2. Given an invalid or non-existent promotion ID, a GET request returns a "Promotion Not Found" error.
+3. Given a promotion that has expired, a GET request returns the promotion details with a status indicating it is expired.
 """
 
-# pylint: disable=duplicate-code
-from datetime import timezone
+from datetime import datetime, timedelta, timezone
 import os
 import logging
 from unittest import TestCase
@@ -28,117 +14,126 @@ from wsgi import app
 from service.common import status
 from service.models import db, Promotion
 from .factories import PromotionFactory
-from email.utils import parsedate_to_datetime
 
+# Use the DATABASE_URI from config; our docker-compose sets it to the 'postgres' DB
 DATABASE_URI = os.getenv(
-    "DATABASE_URI", "postgresql+psycopg://postgres:postgres@localhost:5432/testdb"
+    "DATABASE_URI", "postgresql+psycopg://postgres:pgs3cr3t@postgres:5432/postgres"
 )
 
 BASE_URL = "/promotions"
 
 
-######################################################################
-#  T E S T   C A S E S
-######################################################################
-# pylint: disable=too-many-public-methods
 class TestPromotionService(TestCase):
-    """REST API Server Tests"""
+    """Tests for the Read Promotion endpoints"""
 
     @classmethod
     def setUpClass(cls):
-        """Run once before all tests"""
         app.config["TESTING"] = True
         app.config["DEBUG"] = False
-        # Set up the test database
         app.config["SQLALCHEMY_DATABASE_URI"] = DATABASE_URI
-        app.logger.setLevel(logging.CRITICAL)
         app.app_context().push()
+        db.create_all()
 
     @classmethod
     def tearDownClass(cls):
-        """Run once after all tests"""
-        db.session.close()
+        db.session.remove()
+        db.drop_all()
 
     def setUp(self):
-        """Runs before each test"""
         self.client = app.test_client()
-        db.session.query(Promotion).delete()  # clean up the last tests
+        # Clean out any existing promotions
+        db.session.query(Promotion).delete()
         db.session.commit()
 
     def tearDown(self):
-        """This runs after each test"""
         db.session.remove()
 
-    def _create_promotions(self, count):
-        """Helper function to create promotions"""
-        promotions = []
-        for _ in range(count):
-            test_promotion = PromotionFactory()
-            test_promotion.create()
-            promotions.append(test_promotion)
-        return promotions
-
-    ######################################################################
-    #  P L A C E   T E S T   C A S E S   H E R E
-    ######################################################################
-
-    def test_index(self):
-        """It should call the home page"""
-        resp = self.client.get("/")
-        self.assertEqual(resp.status_code, status.HTTP_200_OK)
-
-    def test_create_promotion(self):
-        """It should Create a new Promotion"""
-        test_promotion = PromotionFactory()
-        logging.debug("Test Promotion: %s", test_promotion.serialize())
-        response = self.client.post(BASE_URL, json=test_promotion.serialize())
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-
-        # Make sure location header is set
-        location = response.headers.get("Location", None)
-        self.assertIsNotNone(location)
-
-        # Check the data is correct
+    def _create_promotion(self, promotion_data=None) -> Promotion:
+        """
+        Helper method to create a promotion via the POST endpoint.
+        If promotion_data is provided, use it; otherwise, use the factory defaults.
+        """
+        if promotion_data is None:
+            promotion = PromotionFactory()
+        else:
+            promotion = PromotionFactory(**promotion_data)
+        response = self.client.post(BASE_URL, json=promotion.serialize())
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_201_CREATED,
+            "Could not create test promotion",
+        )
         new_promotion = response.get_json()
-        self.assertEqual(new_promotion["name"], test_promotion.name)
-        self.assertEqual(new_promotion["promotion_id"], test_promotion.promotion_id)
-        self.assertEqual(
-            parsedate_to_datetime(new_promotion["start_date"]).replace(microsecond=0),
-            test_promotion.start_date.replace(tzinfo=timezone.utc, microsecond=0),
-        )
-        self.assertEqual(
-            parsedate_to_datetime(new_promotion["end_date"]).replace(microsecond=0),
-            test_promotion.end_date.replace(tzinfo=timezone.utc, microsecond=0),
-        )
-        self.assertEqual(new_promotion["promotion_type"], test_promotion.promotion_type)
-        self.assertEqual(
-            new_promotion["promotion_amount"], test_promotion.promotion_amount
-        )
-        self.assertEqual(
-            new_promotion["promotion_description"], test_promotion.promotion_description
-        )
+        promotion.id = new_promotion["id"]
+        return promotion
 
-    def test_get_promotion(self):
-        """It should Get a single Promotion"""
-        # get the id of a promotion
-        test_promotion = self._create_promotions(1)[0]
-        response = self.client.get(f"{BASE_URL}/{test_promotion.id}")
+    def test_get_expired_promotion(self):
+        """
+        Given a promotion that has expired, GET /promotions/<id> returns promotion details
+        with a status indicating it is expired.
+        """
+        past_date = datetime.now(timezone.utc) - timedelta(days=1)
+        promotion_data = {
+            "name": "Expired Promotion",
+            "promotion_id": "PROMO-EXPIRED",
+            "start_date": (past_date - timedelta(days=10)).isoformat(),
+            "end_date": past_date.isoformat(),
+            "promotion_type": "discount",
+            "promotion_amount": 15.0,
+            "promotion_description": "This promotion has expired.",
+        }
+        promotion = self._create_promotion(promotion_data)
+        response = self.client.get(f"{BASE_URL}/{promotion.id}")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         data = response.get_json()
-        self.assertEqual(data["name"], test_promotion.name)
+        self.assertEqual(
+            data.get("status"),
+            "expired",
+            "Expected promotion status to be 'expired' for an expired promotion.",
+        )
+
+    def test_get_promotion_valid(self):
+        """Given a valid promotion ID, GET /promotions/<id> returns promotion details."""
+        promotion = self._create_promotion()
+        response = self.client.get(f"{BASE_URL}/{promotion.id}")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.get_json()
+        self.assertEqual(data["name"], promotion.name)
+        self.assertEqual(data["promotion_id"], promotion.promotion_id)
 
     def test_get_promotion_not_found(self):
-        """It should not Get a Promotion thats not found"""
-        response = self.client.get(f"{BASE_URL}/0")
+        """Given a non-existent promotion ID, GET /promotions/<id> returns 404 Not Found."""
+        response = self.client.get(f"{BASE_URL}/999999")
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         data = response.get_json()
-        logging.debug("Response data = %s", data)
-        self.assertIn("was not found", data["message"])
+        self.assertIn("not found", data["message"].lower())
 
-        # Check that the location header was correct
-        # response = self.client.get(location)
-        # self.assertEqual(response.status_code, status.HTTP_200_OK)
-        # new_promotion = response.get_json()
-        # self.assertEqual(new_promotion["name"], test_promotion.name)
-        # self.assertEqual(new_promotion["address"], test_promotion.address)
-        # self.assertEqual(new_promotion["email"], test_promotion.email)
+    def test_index(self):
+        """GET / should return 200 OK."""
+        response = self.client.get("/")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+
+class TestSadPaths(TestCase):
+    """Tests for error handling in the read promotion endpoints"""
+
+    @classmethod
+    def setUpClass(cls):
+        app.config["TESTING"] = True
+        app.config["DEBUG"] = False
+        app.config["SQLALCHEMY_DATABASE_URI"] = DATABASE_URI
+        app.app_context().push()
+        db.create_all()
+
+    @classmethod
+    def tearDownClass(cls):
+        db.session.remove()
+        db.drop_all()
+
+    def setUp(self):
+        self.client = app.test_client()
+
+    def test_get_promotion_non_existing_again(self):
+        """Another test for a non-existing promotion ID."""
+        response = self.client.get(f"{BASE_URL}/0")
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)

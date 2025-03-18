@@ -1,40 +1,17 @@
 """
-<<<<<<< Updated upstream
 Models for Promotion
-=======
-Models for Promotions
->>>>>>> Stashed changes
 
 All of the models are stored in this module
 """
 
-from datetime import datetime
 import logging
-import os
+from datetime import datetime
 from flask_sqlalchemy import SQLAlchemy
-from retry import retry
-
-# global variables for retry (must be int)
-RETRY_COUNT = int(os.environ.get("RETRY_COUNT", 5))
-RETRY_DELAY = int(os.environ.get("RETRY_DELAY", 1))
-RETRY_BACKOFF = int(os.environ.get("RETRY_BACKOFF", 2))
 
 logger = logging.getLogger("flask.app")
 
 # Create the SQLAlchemy object to be initialized later in init_db()
 db = SQLAlchemy()
-
-
-@retry(
-    Exception,
-    delay=RETRY_DELAY,
-    backoff=RETRY_BACKOFF,
-    tries=RETRY_COUNT,
-    logger=logger,
-)
-def init_db() -> None:
-    """Initialize Tables"""
-    db.create_all()
 
 
 class DataValidationError(Exception):
@@ -50,31 +27,19 @@ class Promotion(db.Model):
     # Table Schema
     ##################################################
     id = db.Column(db.Integer, primary_key=True)
-<<<<<<< Updated upstream
-    name = db.Column(db.String(63))
     promotion_id = db.Column(db.String(63), nullable=False, unique=True)
     start_date = db.Column(db.DateTime, nullable=False)
     end_date = db.Column(db.DateTime, nullable=False)
     promotion_type = db.Column(db.String(63), nullable=False)
     promotion_amount = db.Column(db.Float, nullable=False)
     promotion_description = db.Column(db.String(255), nullable=False)
-
-    # Todo: Place the rest of your schema here...
-=======
     name = db.Column(db.String(63), nullable=False)
->>>>>>> Stashed changes
 
     def __repr__(self):
         return f"<Promotion {self.name} id=[{self.id}]>"
 
     def create(self):
-<<<<<<< Updated upstream
-        """
-        Creates a Promotion to the database
-        """
-=======
         """Creates a Promotion in the database"""
->>>>>>> Stashed changes
         logger.info("Creating %s", self.name)
         self.id = None  # Ensures new record insertion
         try:
@@ -86,15 +51,8 @@ class Promotion(db.Model):
             raise DataValidationError(e) from e
 
     def update(self):
-<<<<<<< Updated upstream
-        """
-        Updates a Promotion to the database
-        """
-        logger.info("Saving %s", self.name)
-=======
         """Updates a Promotion in the database"""
         logger.info("Updating %s", self.name)
->>>>>>> Stashed changes
         try:
             db.session.commit()
         except Exception as e:
@@ -113,47 +71,35 @@ class Promotion(db.Model):
             logger.error("Error deleting record: %s", self)
             raise DataValidationError(e) from e
 
-<<<<<<< Updated upstream
     def serialize(self) -> dict:
         """Serializes a Promotion into a dictionary"""
+        # Allow start_date and end_date to be either datetime or already a string.
+        start_date_val = (
+            self.start_date.isoformat()
+            if hasattr(self.start_date, "isoformat")
+            else self.start_date
+        )
+        end_date_val = (
+            self.end_date.isoformat()
+            if hasattr(self.end_date, "isoformat")
+            else self.end_date
+        )
         return {
             "id": self.id,
             "name": self.name,
             "promotion_id": self.promotion_id,
-            "start_date": self.start_date.isoformat(),
-            "end_date": self.end_date.isoformat(),
+            "start_date": start_date_val,
+            "end_date": end_date_val,
             "promotion_type": self.promotion_type,
             "promotion_amount": self.promotion_amount,
             "promotion_description": self.promotion_description,
         }
 
-    from datetime import datetime
-
-    def deserialize(self, data):
-        """
-        Deserializes a Promotion from a dictionary
-
-        Args:
-            data (dict): A dictionary containing the resource data
-        """
-=======
-    def serialize(self):
-        """Serializes a Promotion into a dictionary"""
-        return {"id": self.id, "name": self.name}
-
     def deserialize(self, data):
         """Deserializes a Promotion from a dictionary"""
->>>>>>> Stashed changes
         try:
-            if data.get("id") is not None:
-                self.id = int(data["id"])
-            else:
-                self.id = None
-
             self.name = data["name"]
-<<<<<<< Updated upstream
             self.promotion_id = data["promotion_id"]
-
             self.start_date = (
                 datetime.fromisoformat(data["start_date"])
                 if data.get("start_date")
@@ -164,36 +110,12 @@ class Promotion(db.Model):
                 if data.get("end_date")
                 else None
             )
-
             self.promotion_type = data["promotion_type"]
-
-            if not isinstance(data["promotion_amount"], (int, float)):
-                raise DataValidationError(
-                    "Invalid type for promotion_amount. Expected a number."
-                )
-
-            self.promotion_amount = data["promotion_amount"]  # ✅ Now it is assigned
-
+            self.promotion_amount = data["promotion_amount"]
             self.promotion_description = data["promotion_description"]
-
-        except AttributeError as error:
-            raise DataValidationError("Invalid attribute: " + error.args[0]) from error
-        except KeyError as error:
-            raise DataValidationError(
-                "Invalid Promotion: missing " + error.args[0]
-            ) from error
-        except TypeError as error:
-            raise DataValidationError(
-                "Invalid Promotion: body of request contained bad or no data "
-                + str(error)
-            ) from error
-
-        return self  # Allow method chaining
-=======
         except (AttributeError, KeyError, TypeError) as error:
             raise DataValidationError(f"Invalid attribute: {error}") from error
         return self
->>>>>>> Stashed changes
 
     ##################################################
     # CLASS METHODS
@@ -201,32 +123,12 @@ class Promotion(db.Model):
 
     @classmethod
     def all(cls):
-<<<<<<< Updated upstream
-        """Returns all of the Promotions in the database"""
-        logger.info("Processing all Promotions")
-=======
         """Returns all Promotions in the database"""
         logger.info("Fetching all Promotions")
->>>>>>> Stashed changes
         return cls.query.all()
 
     @classmethod
     def find(cls, by_id):
-<<<<<<< Updated upstream
-        """Finds a Promotion by it's ID"""
-        logger.info("Processing lookup for id %s ...", by_id)
-        return cls.query.session.get(cls, by_id)
-
-    @classmethod
-    def find_by_name(cls, name):
-        """Returns all Promotions with the given name
-
-        Args:
-            name (string): the name of the Promotions you want to match
-        """
-        logger.info("Processing name query for %s ...", name)
-        return cls.query.filter(cls.name == name)
-=======
         """Finds a Promotion by its ID"""
         logger.info("Fetching Promotion with ID: %s", by_id)
         return cls.query.get(by_id)
@@ -236,4 +138,3 @@ class Promotion(db.Model):
         """Returns all Promotions with the given name"""
         logger.info("Fetching Promotions with name: %s", name)
         return cls.query.filter(cls.name == name).all()
->>>>>>> Stashed changes
