@@ -207,3 +207,17 @@ class TestSadPaths(TestCase):
     #     ]
     #     response = self.client.get(BASE_URL, query_string="name=fido")
     #     self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+     ######################################################################
+    # Sad Path 3: Non-existent Name
+    ######################################################################
+    def test_get_promotion_list_non_existent_name(self):
+        """
+        It should return a 200 with an empty list if the requested name doesn't exist.
+        (Current code doesn't raise a 404 if the name is not found.)
+        """
+        response = self.client.get(f"{BASE_URL}?name=NoSuchNameExists")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.get_json()
+        self.assertIsInstance(data, list)
+        self.assertEqual(len(data), 0, "Expected an empty list for a non-existent name")
