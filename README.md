@@ -2,32 +2,145 @@
 
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Python](https://img.shields.io/badge/Language-Python-blue.svg)](https://python.org/)
+[![Open in Remote - Containers](https://img.shields.io/static/v1?label=Remote%20-%20Containers&message=Open&color=blue&logo=visualstudiocode)](https://vscode.dev/redirect?url=vscode://ms-vscode-remote.remote-containers/cloneInVolume?url=https://github.com/<your-repo>)
 
-This is a skeleton you can use to start your projects.
-
-**Note:** _Feel free to overwrite this `README.md` file with the one that describes your project._
+NYU DevOps project for managing **Promotions** in an e-commerce platform. This service provides RESTful APIs for managing discounts, special offers, and promotions.
 
 ## Overview
 
-This project template contains starter code for your class project. The `/service` folder contains your `models.py` file for your model and a `routes.py` file for your service. The `/tests` folder has test case starter code for testing the model and the service separately. All you need to do is add your functionality. You can use the [lab-flask-tdd](https://github.com/nyu-devops/lab-flask-tdd) for code examples to copy from.
+This is a **Promotions Service** for managing discounts in an e-commerce platform. It allows users to create, update, delete, and track various promotions such as:
+- ✅ **Percentage discounts**
+- ✅ **Buy-One-Get-One (BOGO) offers**
+- ✅ **Flat rate discounts ($10 off, etc.)**
+- 🚧 **Query filters for promotions (upcoming)**
+- 🚧 **Stateful actions on promotions (upcoming)**
 
-## Automatic Setup
+## Introduction
+As Software Engineers, it's crucial to test and ensure code stability. You can learn more about this in the article: [A Case for Test Driven Development](https://johnrofrano.medium.com/a-case-for-test-driven-development-7d9a552e0a16)
 
-The best way to use this repo is to start your own repo using it as a git template. To do this just press the green **Use this template** button in GitHub and this will become the source for your repository.
+---
 
-## Manual Setup
+## 📌 Prerequisite Software Installation
 
-You can also clone this repository and then copy and paste the starter code into your project repo folder on your local computer. Be careful not to copy over your own `README.md` file so be selective in what you copy.
+This project uses **Docker** and **Visual Studio Code with Remote Containers** for consistent development environments.
 
-There are 4 hidden files that you will need to copy manually if you use the Mac Finder or Windows Explorer to copy files from this folder into your repo folder.
+Install the following:
+- [Docker Desktop](https://www.docker.com/products/docker-desktop)
+- [Visual Studio Code](https://code.visualstudio.com)
+- [Remote Containers extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers)
 
-These should be copied using a bash shell as follows:
+Alternatively, use [Vagrant](https://www.vagrantup.com/) and [VirtualBox](https://www.virtualbox.org/) for virtual environments. More info in [Creating Reproducible Development Environments](https://johnrofrano.medium.com/creating-reproducible-development-environments-fac8d6471f35).
+
+---
+
+## 📌 Bring up the Development Environment
+
+### 🚀 Start Developing with Visual Studio Code and Docker
+
+1. **Clone and navigate into the repository:**
 
 ```bash
-    cp .gitignore  ../<your_repo_folder>/
-    cp .flaskenv ../<your_repo_folder>/
-    cp .gitattributes ../<your_repo_folder>/
+git clone https://github.com/<your-repo>.git
+cd <your-repo>
 ```
+
+2. **Launch Visual Studio Code**:
+
+```bash
+code .
+```
+
+3. When prompted to **"Reopen in Container"**, select **"Yes"**.
+
+This will build your containerized environment automatically.
+
+---
+
+## 📌 Running the Service
+
+### Option 1: Run Locally (without Docker)
+
+**Install dependencies:**
+```bash
+pip install -r requirements.txt
+```
+
+**Start the Flask app**:
+```bash
+flask run
+```
+
+The service will run at: **http://localhost:5000/**
+
+### Option 2: Running with Docker
+
+Use Docker Compose:
+
+```bash
+docker-compose up
+```
+
+The service will be available at **http://localhost:5000/** (unless specified otherwise).
+
+---
+
+## 📌 Running Tests
+
+Run tests before any code changes to confirm all existing functionality works:
+
+```bash
+make test
+```
+
+To run linting for code quality:
+
+```bash
+make lint
+```
+
+---
+
+## 📌 API Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET`    | `/promotions`         | List all promotions |
+| `POST`   | `/promotions`         | Create a new promotion |
+| `GET`    | `/promotions/{id}`    | Get a specific promotion |
+| `PUT`    | `/promotions/{id}`    | Update a promotion |
+| `DELETE` | `/promotions/{id}`    | Delete a promotion |
+| 🚧 `GET`  | `/promotions?type=BOGO`| Query promotions by type (upcoming) |
+| 🚧 `PUT` | `/promotions/{id}/activate` | Activate a promotion (upcoming) |
+
+---
+
+## 📌 Shutdown Development Environment
+
+### Using Docker
+```bash
+docker-compose down
+```
+
+### Using Vagrant
+```bash
+exit
+vagrant halt
+```
+To remove VM:
+```bash
+vagrant destroy
+```
+
+---
+
+## 📌 What's Featured in this Project?
+
+- `service/__init__.py` — Flask app setup
+- `service/models.py` — Promotion data model
+- `service/routes.py` — Flask routes for API
+- `tests/` — Test suites for models and API
+
+---
 
 ## Contents
 
