@@ -156,6 +156,23 @@ class TestPromotionService(TestCase):
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertEqual(len(response.data), 0)
 
+    def test_get_promotion_not_found(self):
+        """Given a non-existent promotion ID, GET /promotions/<id> returns 404 Not Found."""
+        response = self.client.get(f"{BASE_URL}/999999")
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        data = response.get_json()
+        self.assertIn("not found", data.get("message", "").lower())
+
+    def test_get_valid_promotion(self):
+        """Given a valid promotion ID, GET /promotions/<id> returns promotion details."""
+        test_promotions = self._create_promotions(1)
+        promotion = test_promotions[0]
+        response = self.client.get(f"{BASE_URL}/{promotion.id}")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.get_json()
+        self.assertEqual(data.get("name"), promotion.name)
+        self.assertEqual(data.get("promotion_id"), promotion.promotion_id)
+
         # Check that the location header was correct
         # response = self.client.get(location)
         # self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -197,8 +214,8 @@ class TestSadPaths(TestCase):
         response = self.client.get("/promotions/0")
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertIn("Not Found", str(response.data))
-    
-    #Add this
+
+    # Add this
     def test_update_promotion(self):
         """It should Update an existing Promotion"""
         # Create a promotion first
@@ -215,7 +232,9 @@ class TestSadPaths(TestCase):
         new_promotion["promotion_description"] = "Updated Description"
 
         # Send an update request
-        response = self.client.put(f"{BASE_URL}/{new_promotion['id']}", json=new_promotion)
+        response = self.client.put(
+            f"{BASE_URL}/{new_promotion['id']}", json=new_promotion
+        )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         # Verify the response
@@ -223,8 +242,9 @@ class TestSadPaths(TestCase):
         self.assertEqual(updated_promotion["name"], "Updated Promotion Name")
         self.assertEqual(updated_promotion["promotion_amount"], 9999)
         self.assertEqual(updated_promotion["promotion_type"], "special")
-        self.assertEqual(updated_promotion["promotion_description"], "Updated Description")
-
+        self.assertEqual(
+            updated_promotion["promotion_description"], "Updated Description"
+        )
 
     ######################################################################
     #  T E S T   M O C K S
