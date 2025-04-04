@@ -2,8 +2,12 @@
 Test Factory to make fake objects for testing
 """
 
+import random
+from datetime import timedelta
+
 import factory
-from service.models import Promotion
+import factory.random
+from service.models import Promotion, PromotionType
 
 
 class PromotionFactory(factory.Factory):
@@ -18,7 +22,12 @@ class PromotionFactory(factory.Factory):
     name = factory.Faker("first_name")
     promotion_id = factory.Faker("ean13")
     start_date = factory.Faker("date_time")
-    end_date = factory.Faker("date_time")
-    promotion_type = factory.Faker("word")
+
+    @factory.lazy_attribute
+    def end_date(self):
+        """Generates an end_date 7 days after start_date"""
+        return self.start_date + timedelta(days=7)
+
+    promotion_type = factory.LazyFunction(lambda: random.choice(list(PromotionType)))
     promotion_amount = factory.Faker("random_number")
     promotion_description = factory.Faker("text")

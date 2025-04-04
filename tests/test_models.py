@@ -103,7 +103,7 @@ class TestPromotion(TestCase):
         self.assertEqual(data["end_date"], promotion.end_date.isoformat())
 
         self.assertIn("promotion_type", data)
-        self.assertEqual(data["promotion_type"], promotion.promotion_type)
+        self.assertEqual(data["promotion_type"], promotion.promotion_type.value)
         self.assertIn("promotion_amount", data)
         self.assertEqual(data["promotion_amount"], promotion.promotion_amount)
         self.assertIn("promotion_description", data)
@@ -131,7 +131,7 @@ class TestPromotion(TestCase):
             promotion.end_date, datetime.fromisoformat(data["end_date"])
         )  # Fix
         self.assertIn("promotion_type", data)
-        self.assertEqual(data["promotion_type"], promotion.promotion_type)
+        self.assertEqual(data["promotion_type"], promotion.promotion_type.value)
         self.assertIn("promotion_amount", data)
         self.assertEqual(data["promotion_amount"], promotion.promotion_amount)
         self.assertIn("promotion_description", data)
@@ -161,7 +161,7 @@ class TestPromotion(TestCase):
         data["promotion_amount"] = "not a number"
         promotion = Promotion()
         self.assertRaises(DataValidationError, promotion.deserialize, data)
-  ##Add this!
+
     def test_update_a_promotion(self):
         """It should Update a Promotion"""
         promotion = PromotionFactory()
@@ -175,7 +175,7 @@ class TestPromotion(TestCase):
         promotion.promotion_id = "Updated ID"
         promotion.start_date = datetime(2025, 3, 15, 0, 0)
         promotion.end_date = datetime(2025, 3, 20, 0, 0)
-        promotion.promotion_type = "discount"
+        promotion.promotion_type = "DISCOUNT"
         promotion.promotion_amount = 9999
         promotion.promotion_description = "Updated Description"
 
@@ -189,9 +189,10 @@ class TestPromotion(TestCase):
         self.assertEqual(updated_promotion.promotion_id, "Updated ID")
         self.assertEqual(updated_promotion.start_date, datetime(2025, 3, 15, 0, 0))
         self.assertEqual(updated_promotion.end_date, datetime(2025, 3, 20, 0, 0))
-        self.assertEqual(updated_promotion.promotion_type, "discount")
+        self.assertEqual(updated_promotion.promotion_type.value, "discount")
         self.assertEqual(updated_promotion.promotion_amount, 9999)
         self.assertEqual(updated_promotion.promotion_description, "Updated Description")
+
 
 class TestExceptionHandlers(TestCase):
     """Promotion Model Exception Handlers"""
@@ -218,35 +219,69 @@ class TestExceptionHandlers(TestCase):
         self.assertRaises(DataValidationError, promotion.delete)
 
 
+class TestModelQueries(TestCase):
+    """Promotion Model Query Tests"""
 
-# class TestModelQueries(TestCase):
-#     """Promotion Model Query Tests"""
+    def test_find_promotion(self):
+        """It should Find a Promotion by ID"""
+        promotions = PromotionFactory.create_batch(5)
+        for promotion in promotions:
+            promotion.create()
+        logging.debug(promotions)
+        # make sure they got saved
+        # self.assertEqual(len(Promotion.all()), 5)
+        # find the 2nd promotion in the list
+        promotion = Promotion.find(promotions[1].id)
+        self.assertIsNot(promotion, None)
+        self.assertEqual(promotion.id, promotions[1].id)
+        self.assertEqual(promotion.name, promotions[1].name)
+        self.assertEqual(promotion.promotion_id, promotions[1].promotion_id)
+        self.assertEqual(
+            promotion.start_date,
+            promotions[1].start_date,
+        )
+        self.assertEqual(
+            promotion.end_date,
+            promotions[1].end_date,
+        )
+        self.assertEqual(
+            promotion.promotion_type.value,
+            promotions[1].promotion_type.value,
+        )
+        self.assertEqual(
+            promotion.promotion_amount,
+            promotions[1].promotion_amount,
+        )
+        self.assertEqual(
+            promotion.promotion_description,
+            promotions[1].promotion_description,
+        )
 
-#     def test_find_promotion(self):
-#         """It should Find a Promotion by ID"""
-#         promotions = PromotionFactory.create_batch(5)
-#         for promotion in promotions:
-#             promotion.create()
-#         logging.debug(promotions)
-#         # make sure they got saved
-#         self.assertEqual(len(Promotion.all()), 5)
-#         # find the 2nd promotion in the list
-#         promotion = Promotion.find(promotions[1].id)
-#         self.assertIsNot(promotion, None)
-#         self.assertEqual(promotion.id, promotions[1].id)
-#         self.assertEqual(promotion.name, promotions[1].name)
-#         self.assertEqual(promotion.available, promotions[1].available)
-#         self.assertEqual(promotion.gender, promotions[1].gender)
-#         self.assertEqual(promotion.birthday, promotions[1].birthday)
+    def test_find_by_name(self):
+        """It should Find a Promotion by Name"""
+        promotions = PromotionFactory.create_batch(10)
+        for promotion in promotions:
+            promotion.create()
+        name = promotions[0].name
+        count = len([promotion for promotion in promotions if promotion.name == name])
+        found = Promotion.find_by_name(name)
+        self.assertEqual(found.count(), count)
+        for promotion in found:
+            self.assertEqual(promotion.name, name)
 
-#     def test_find_by_name(self):
-#         """It should Find a Promotion by Name"""
-#         promotions = PromotionFactory.create_batch(10)
-#         for promotion in promotions:
-#             promotion.create()
-#         name = promotions[0].name
-#         count = len([promotion for promotion in promotions if promotion.name == name])
-#         found = Promotion.find_by_name(name)
-#         self.assertEqual(found.count(), count)
-#         for promotion in found:
-#             self.assertEqual(promotion.name, name)
+    def test_find_by_promotion_type(self):
+        """It should Find Promotions by Promotion Type"""
+        promotions = PromotionFactory.create_batch(10)
+        for promotion in promotions:
+            promotion.create()
+        promotion_type = promotions[0].promotion_type.value
+        count = len(
+            [
+                promotion
+                for promotion in promotions
+                if promotion.promotion_type.value == promotion_type
+            ]
+        )
+        found = Promotion.find_by_promotion_type(promotion_type)
+        for promotion in found:
+            self.assertEqual(promotion.promotion_type.value, promotion_type)
