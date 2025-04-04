@@ -23,7 +23,7 @@ and Delete Promotion
 
 from flask import jsonify, request, url_for, abort
 from flask import current_app as app  # Import Flask application
-from service.models import Promotion
+from service.models import Promotion, PromotionType
 from service.common import status  # HTTP Status Codes
 
 
@@ -172,25 +172,36 @@ def update_promotion(promotion_id):
 ######################################################################
 @app.route("/promotions", methods=["GET"])
 def list_promotions():
-    """Returns all of the Promotions"""
+    """Returns all of the Promotions or filters by query parameters"""
     app.logger.info("Request for promotion list")
 
-    promotions = []
+    allowed_params = {"id", "name", "promotion_type"}
+    for key in request.args.keys():
+        if key not in allowed_params:
+            abort(400, description=f"Invalid query parameter: {key}")
 
-    # Parse any arguments from the query string
+    query = Promotion.query
+
     id = request.args.get("id")
     name = request.args.get("name")
+    promotion_type_param = request.args.get("promotion_type")
 
     if id:
-        app.logger.info("Find by id: %s", id)
-        promotions = Promotion.find(id)
-    elif name:
-        app.logger.info("Find by name: %s", name)
-        promotions = Promotion.find_by_name(name)
-    else:
-        app.logger.info("Find all")
-        promotions = Promotion.all()
+        app.logger.info("Filter by id: %s", id)
+        query = query.filter(Promotion.id == int(id))  # 确保是整数
 
+    if name:
+        app.logger.info("Filter by name: %s", name)
+        query = query.filter(Promotion.name == name)
+
+    if promotion_type_param:
+        try:
+            promotion_type_enum = PromotionType(promotion_type_param)
+            query = query.filter(Promotion.promotion_type == promotion_type_enum)
+        except ValueError:
+            abort(400, description=f"Invalid promotion_type: {promotion_type_param}")
+
+    promotions = query.all()
     results = [promotion.serialize() for promotion in promotions]
     app.logger.info("Returning %d promotions", len(results))
     return jsonify(results), status.HTTP_200_OK

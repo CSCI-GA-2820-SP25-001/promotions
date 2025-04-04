@@ -9,6 +9,8 @@ import logging
 import os
 from flask_sqlalchemy import SQLAlchemy
 from retry import retry
+from enum import Enum
+from sqlalchemy import Enum as SQLAlchemyEnum
 
 # global variables for retry (must be int)
 RETRY_COUNT = int(os.environ.get("RETRY_COUNT", 5))
@@ -37,6 +39,14 @@ class DataValidationError(Exception):
     """Used for an data validation errors when deserializing"""
 
 
+class PromotionType(Enum):
+    """Enumeration of the Promotion types"""
+
+    DISCOUNT = "discount"
+    FLASH = "flash"
+    COUPON = "coupon"
+
+
 class Promotion(db.Model):
     """
     Class that represents a Promotion
@@ -50,7 +60,7 @@ class Promotion(db.Model):
     promotion_id = db.Column(db.String(63), nullable=False, unique=True)
     start_date = db.Column(db.DateTime, nullable=False)
     end_date = db.Column(db.DateTime, nullable=False)
-    promotion_type = db.Column(db.String(63), nullable=False)
+    promotion_type = db.Column(SQLAlchemyEnum(PromotionType), nullable=False)
     promotion_amount = db.Column(db.Float, nullable=False)
     promotion_description = db.Column(db.String(255), nullable=False)
 
@@ -104,12 +114,10 @@ class Promotion(db.Model):
             "promotion_id": self.promotion_id,
             "start_date": self.start_date.isoformat(),
             "end_date": self.end_date.isoformat(),
-            "promotion_type": self.promotion_type,
+            "promotion_type": self.promotion_type.value,
             "promotion_amount": self.promotion_amount,
             "promotion_description": self.promotion_description,
         }
-
-    from datetime import datetime
 
     def deserialize(self, data):
         """
@@ -138,14 +146,9 @@ class Promotion(db.Model):
                 else None
             )
 
-            self.promotion_type = data["promotion_type"]
+            self.promotion_type = PromotionType(data["promotion_type"])
 
-            if not isinstance(data["promotion_amount"], (int, float)):
-                raise DataValidationError(
-                    "Invalid type for promotion_amount. Expected a number."
-                )
-
-            self.promotion_amount = data["promotion_amount"]  # ✅ Now it is assigned
+            self.promotion_amount = float(data["promotion_amount"])
 
             self.promotion_description = data["promotion_description"]
 
@@ -159,6 +162,10 @@ class Promotion(db.Model):
             raise DataValidationError(
                 "Invalid Promotion: body of request contained bad or no data "
                 + str(error)
+            ) from error
+        except ValueError as error:
+            raise DataValidationError(
+                "Invalid Promotion: could not convert data - " + str(error)
             ) from error
 
         return self  # Allow method chaining
@@ -188,3 +195,13 @@ class Promotion(db.Model):
         """
         logger.info("Processing name query for %s ...", name)
         return cls.query.filter(cls.name == name)
+
+    @classmethod
+    def find_by_promotion_type(cls, promotion_type):
+        """
+        Returns all Promotions with the given PromotionType
+        Args:
+            promotion_type (PromotionType): the PromotionType you want to match
+        """
+        logger.info("Processing promotion_type query for %s ...", promotion_type)
+        return cls.query.filter(cls.promotion_type == promotion_type).all()

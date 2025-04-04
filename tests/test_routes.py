@@ -27,7 +27,7 @@ from unittest import TestCase
 from unittest.mock import MagicMock, patch
 from wsgi import app
 from service.common import status
-from service.models import DataValidationError, db, Promotion
+from service.models import DataValidationError, PromotionType, db, Promotion
 from .factories import PromotionFactory
 from email.utils import parsedate_to_datetime
 
@@ -132,7 +132,9 @@ class TestPromotionService(TestCase):
             microsecond=0
         )
         self.assertEqual(received_end_date, expected_end_date)
-        self.assertEqual(new_promotion["promotion_type"], test_promotion.promotion_type)
+        self.assertEqual(
+            new_promotion["promotion_type"], test_promotion.promotion_type.value
+        )
         self.assertEqual(
             new_promotion["promotion_amount"], test_promotion.promotion_amount
         )
@@ -187,6 +189,60 @@ class TestPromotionService(TestCase):
         response = self.client.get(BASE_URL)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         data = response.get_json()
+        self.assertIsInstance(data, list)
+
+    def test_query_by_promotion_type(self):
+        """It should return a list of promotions filtered by promotion_type"""
+        # Create random promotions
+        self._create_promotions(3)
+
+        # Add at least one known 'discount' promotion
+        discount_promo = PromotionFactory(promotion_type=PromotionType.DISCOUNT)
+        response = self.client.post(BASE_URL, json=discount_promo.serialize())
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        discount_promo.id = response.get_json()["id"]
+
+        # Send the query
+        response = self.client.get(f"{BASE_URL}?promotion_type=discount")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.get_json()
+        self.assertIsInstance(data, list)
+
+        # All returned promotions should be 'discount'
+        for promo in data:
+            self.assertEqual(promo["promotion_type"], "discount")
+
+    def test_query_by_multiple_fields(self):
+        """It should return promotions filtered by promotion_type and name"""
+        # Create known promotion
+        promo = PromotionFactory(promotion_type=PromotionType.DISCOUNT, name="TEST1")
+        response = self.client.post(BASE_URL, json=promo.serialize())
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        # Create another promotion with different name
+        promo2 = PromotionFactory(promotion_type=PromotionType.DISCOUNT, name="TEST2")
+        self.client.post(BASE_URL, json=promo2.serialize())
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        # Query with two filters
+        response = self.client.get(f"{BASE_URL}?promotion_type=discount&name=TEST1")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.get_json()
+        self.assertEqual(len(data), 1)
+        self.assertEqual(data[0]["name"], "TEST1")
+        self.assertEqual(data[0]["promotion_type"].upper(), "DISCOUNT")
+
+    def test_query_by_non_existent_field(self):
+        """
+        It should return an empty list when querying by a non-existent field.
+        """
+        # Create a promotion
+        self._create_promotions(1)
+
+        # Query by a non-existent field
+        response = self.client.get(f"{BASE_URL}?non_existent_field=value")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
 
 class TestSadPaths(TestCase):
     """Test REST Exception Handling"""
@@ -234,7 +290,7 @@ class TestSadPaths(TestCase):
         logging.debug(new_promotion)
         new_promotion["name"] = "Updated Promotion Name"
         new_promotion["promotion_amount"] = 9999
-        new_promotion["promotion_type"] = "special"
+        new_promotion["promotion_type"] = "discount"
         new_promotion["promotion_description"] = "Updated Description"
 
         # Send an update request
@@ -247,7 +303,7 @@ class TestSadPaths(TestCase):
         updated_promotion = response.get_json()
         self.assertEqual(updated_promotion["name"], "Updated Promotion Name")
         self.assertEqual(updated_promotion["promotion_amount"], 9999)
-        self.assertEqual(updated_promotion["promotion_type"], "special")
+        self.assertEqual(updated_promotion["promotion_type"], "discount")
         self.assertEqual(
             updated_promotion["promotion_description"], "Updated Description"
         )
