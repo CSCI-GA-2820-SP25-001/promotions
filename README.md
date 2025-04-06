@@ -1,5 +1,10 @@
 # NYU DevOps Project Template
 
+
+![Build Status](https://github.com/tburke-nyu/promotions/actions/workflows/ci.yml/badge.svg)
+[![codecov](https://codecov.io/gh/tburke-nyu/promotions/branch/master/graph/badge.svg)](https://codecov.io/gh/tburke-nyu/promotions)
+
+
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Python](https://img.shields.io/badge/Language-Python-blue.svg)](https://python.org/)
 [![Open in Remote - Containers](https://img.shields.io/static/v1?label=Remote%20-%20Containers&message=Open&color=blue&logo=visualstudiocode)](https://vscode.dev/redirect?url=vscode://ms-vscode-remote.remote-containers/cloneInVolume?url=https://github.com/<your-repo>)
