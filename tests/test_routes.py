@@ -24,12 +24,18 @@ from datetime import datetime, timezone
 import os
 import logging
 from unittest import TestCase
-from unittest.mock import MagicMock, patch
+
+# from unittest.mock import MagicMock, patch
 from wsgi import app
 from service.common import status
-from service.models import DataValidationError, PromotionType, db, Promotion
+from service.models import PromotionType, db, Promotion
+
+# from .factories import PromotionFactory
+
+# from service.models import DataValidationError, PromotionType, db, Promotion
 from .factories import PromotionFactory
-from email.utils import parsedate_to_datetime
+
+# from email.utils import parsedate_to_datetime
 
 DATABASE_URI = os.getenv(
     "DATABASE_URI", "postgresql+psycopg://postgres:postgres@localhost:5432/testdb"
