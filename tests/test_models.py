@@ -282,17 +282,20 @@ class TestModelQueries(TestCase):
 
     def test_find_by_promotion_type(self):
         """It should Find Promotions by Promotion Type"""
+        # Create a batch of 10 promotions
         promotions = PromotionFactory.create_batch(10)
         for promotion in promotions:
             promotion.create()
         promotion_type = promotions[0].promotion_type.value
-        count = len(
-            [
-                promotion
-                for promotion in promotions
-                if promotion.promotion_type.value == promotion_type
-            ]
-        )
+
+        # Query the database to get the expected count
+        expected_count = Promotion.query.filter_by(
+            promotion_type=promotion_type
+        ).count()
+
+        # Use the find_by_promotion_type method
         found = Promotion.find_by_promotion_type(promotion_type)
+        self.assertEqual(len(found), expected_count)
+
         for promotion in found:
             self.assertEqual(promotion.promotion_type.value, promotion_type)
