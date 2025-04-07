@@ -63,6 +63,7 @@ class Promotion(db.Model):
     promotion_type = db.Column(SQLAlchemyEnum(PromotionType), nullable=False)
     promotion_amount = db.Column(db.Float, nullable=False)
     promotion_description = db.Column(db.String(255), nullable=False)
+    usage_count = db.Column(db.Integer, nullable=False, default=0)
 
     # Todo: Place the rest of your schema here...
 
@@ -117,6 +118,7 @@ class Promotion(db.Model):
             "promotion_type": self.promotion_type.value,
             "promotion_amount": self.promotion_amount,
             "promotion_description": self.promotion_description,
+            "usage_count": self.usage_count,
         }
 
     def deserialize(self, data):
@@ -151,6 +153,10 @@ class Promotion(db.Model):
             self.promotion_amount = float(data["promotion_amount"])
 
             self.promotion_description = data["promotion_description"]
+
+            self.usage_count = (
+                int(data["usage_count"]) if data.get("usage_count") else 0
+            )
 
         except AttributeError as error:
             raise DataValidationError("Invalid attribute: " + error.args[0]) from error

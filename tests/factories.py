@@ -20,7 +20,7 @@ class PromotionFactory(factory.Factory):
 
     id = factory.Sequence(lambda n: n)
     name = factory.Faker("first_name")
-    promotion_id = factory.Faker("ean13")
+    promotion_id = factory.Faker("ean8")
     start_date = factory.Faker("date_time")
 
     @factory.lazy_attribute
@@ -31,3 +31,4 @@ class PromotionFactory(factory.Factory):
     promotion_type = factory.LazyFunction(lambda: random.choice(list(PromotionType)))
     promotion_amount = factory.Faker("random_number")
     promotion_description = factory.Faker("text")
+    usage_count = factory.Faker("random_int", min=0, max=100)

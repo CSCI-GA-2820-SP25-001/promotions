@@ -167,6 +167,22 @@ def update_promotion(promotion_id):
     return jsonify(promotion.serialize()), status.HTTP_200_OK
 
 
+@app.route("/promotions/<int:promotion_id>/apply", methods=["PUT"])
+def apply_promotion(promotion_id):
+    """
+    Applies a promotion and increments its usage count
+    """
+    app.logger.info(f"Request to apply promotion with id: {promotion_id}")
+    promotion = Promotion.find(promotion_id)
+    if not promotion:
+        abort(404, description=f"Promotion with id {promotion_id} not found")
+
+    promotion.usage_count += 1
+    promotion.update()
+
+    return jsonify(promotion.serialize()), 200
+
+
 ######################################################################
 # LIST ALL promotions
 ######################################################################
@@ -175,20 +191,20 @@ def list_promotions():
     """Returns all of the Promotions or filters by query parameters"""
     app.logger.info("Request for promotion list")
 
-    allowed_params = {"id", "name", "promotion_type"}
+    allowed_params = {"promotion_id", "name", "promotion_type"}
     for key in request.args.keys():
         if key not in allowed_params:
             abort(400, description=f"Invalid query parameter: {key}")
 
     query = Promotion.query
 
-    id = request.args.get("id")
+    promotion_id = request.args.get("promotion_id")
     name = request.args.get("name")
     promotion_type_param = request.args.get("promotion_type")
 
-    if id:
-        app.logger.info("Filter by id: %s", id)
-        query = query.filter(Promotion.id == int(id))  # 确保是整数
+    if promotion_id:
+        app.logger.info("Filter by promotion_id: %s", promotion_id)
+        query = query.filter(Promotion.promotion_id == str(promotion_id))
 
     if name:
         app.logger.info("Filter by name: %s", name)
