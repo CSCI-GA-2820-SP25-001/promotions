@@ -7,9 +7,9 @@ All of the models are stored in this module
 from datetime import datetime
 import logging
 import os
+from enum import Enum
 from flask_sqlalchemy import SQLAlchemy
 from retry import retry
-from enum import Enum
 from sqlalchemy import Enum as SQLAlchemyEnum
 
 # global variables for retry (must be int)
@@ -64,8 +64,6 @@ class Promotion(db.Model):
     promotion_amount = db.Column(db.Float, nullable=False)
     promotion_description = db.Column(db.String(255), nullable=False)
     usage_count = db.Column(db.Integer, nullable=False, default=0)
-
-    # Todo: Place the rest of your schema here...
 
     def __repr__(self):
         return f"<Promotion {self.name} id=[{self.id}]>"
