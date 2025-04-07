@@ -1,7 +1,7 @@
 # NYU DevOps Project Template
 
 
-![Build Status](https://github.com/tburke-nyu/promotions/actions/workflows/ci.yml/badge.svg)
+![Build Status](https://github.com/CSCI-GA-2820-SP25-001/promotions/actions/workflows/ci.yml/badge.svg)
 [![codecov](https://codecov.io/gh/tburke-nyu/promotions/branch/master/graph/badge.svg)](https://codecov.io/gh/tburke-nyu/promotions)
 
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
