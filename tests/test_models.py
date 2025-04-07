@@ -79,9 +79,10 @@ class TestPromotion(TestCase):
         self.assertEqual(data.promotion_id, promotion.promotion_id)
         self.assertEqual(data.start_date, promotion.start_date)
         self.assertEqual(data.end_date, promotion.end_date)
-        self.assertEqual(data.promotion_type, promotion.promotion_type)
+        self.assertEqual(data.promotion_type.value, promotion.promotion_type.value)
         self.assertEqual(data.promotion_amount, promotion.promotion_amount)
         self.assertEqual(data.promotion_description, promotion.promotion_description)
+        self.assertEqual(data.usage_count, promotion.usage_count)
 
     def test_serialize_a_promotion(self):
         """It should serialize a Promotion"""
@@ -95,8 +96,8 @@ class TestPromotion(TestCase):
         self.assertEqual(data["name"], promotion.name)
         self.assertIn("promotion_id", data)
         self.assertEqual(data["promotion_id"], promotion.promotion_id)
-        self.assertIn("start_date", data)
 
+        self.assertIn("start_date", data)
         self.assertEqual(data["start_date"], promotion.start_date.isoformat())
 
         self.assertIn("end_date", data)
@@ -108,6 +109,8 @@ class TestPromotion(TestCase):
         self.assertEqual(data["promotion_amount"], promotion.promotion_amount)
         self.assertIn("promotion_description", data)
         self.assertEqual(data["promotion_description"], promotion.promotion_description)
+        self.assertIn("usage_count", data)
+        self.assertEqual(data["usage_count"], promotion.usage_count)
 
     def test_deserialize_a_promotion(self):
         """It should deserialize a Promotion"""
@@ -136,6 +139,8 @@ class TestPromotion(TestCase):
         self.assertEqual(data["promotion_amount"], promotion.promotion_amount)
         self.assertIn("promotion_description", data)
         self.assertEqual(data["promotion_description"], promotion.promotion_description)
+        self.assertIn("usage_count", data)
+        self.assertEqual(promotion.usage_count, promotion.usage_count)
 
     def test_deserialize_missing_data(self):
         """It should not deserialize a Promotion with missing data"""
@@ -178,6 +183,7 @@ class TestPromotion(TestCase):
         promotion.promotion_type = "DISCOUNT"
         promotion.promotion_amount = 9999
         promotion.promotion_description = "Updated Description"
+        promotion.usage_count = 0
 
         original_id = promotion.id
         promotion.update()
@@ -189,9 +195,10 @@ class TestPromotion(TestCase):
         self.assertEqual(updated_promotion.promotion_id, "Updated ID")
         self.assertEqual(updated_promotion.start_date, datetime(2025, 3, 15, 0, 0))
         self.assertEqual(updated_promotion.end_date, datetime(2025, 3, 20, 0, 0))
-        self.assertEqual(updated_promotion.promotion_type.value, "discount")
+        self.assertEqual(updated_promotion.promotion_type.value, "DISCOUNT")
         self.assertEqual(updated_promotion.promotion_amount, 9999)
         self.assertEqual(updated_promotion.promotion_description, "Updated Description")
+        self.assertEqual(updated_promotion.usage_count, 0)
 
 
 class TestExceptionHandlers(TestCase):
@@ -255,6 +262,10 @@ class TestModelQueries(TestCase):
         self.assertEqual(
             promotion.promotion_description,
             promotions[1].promotion_description,
+        )
+        self.assertEqual(
+            promotion.usage_count,
+            promotions[1].usage_count,
         )
 
     def test_find_by_name(self):

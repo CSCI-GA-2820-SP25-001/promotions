@@ -36,6 +36,7 @@ def create_app():
     # Initialize Plugins
     # pylint: disable=import-outside-toplevel
     from service.models import db
+
     db.init_app(app)
 
     with app.app_context():
@@ -45,6 +46,7 @@ def create_app():
         from service.common import error_handlers, cli_commands  # noqa: F401, E402
 
         try:
+            # db.drop_all() uncommit if you want to reset the database on startup, especially to accommodate schema changes
             db.create_all()
         except Exception as error:  # pylint: disable=broad-except
             app.logger.critical("%s: Cannot continue", error)

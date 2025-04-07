@@ -141,6 +141,7 @@ class TestPromotionService(TestCase):
         self.assertEqual(
             new_promotion["promotion_description"], test_promotion.promotion_description
         )
+        self.assertEqual(new_promotion["usage_count"], test_promotion.usage_count)
 
     def test_delete_promotions(self):
         """It should Delete a Promotion"""
@@ -200,17 +201,30 @@ class TestPromotionService(TestCase):
         discount_promo = PromotionFactory(promotion_type=PromotionType.DISCOUNT)
         response = self.client.post(BASE_URL, json=discount_promo.serialize())
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        discount_promo.id = response.get_json()["id"]
 
         # Send the query
-        response = self.client.get(f"{BASE_URL}?promotion_type=discount")
+        response = self.client.get(f"{BASE_URL}?promotion_type=DISCOUNT")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         data = response.get_json()
         self.assertIsInstance(data, list)
 
         # All returned promotions should be 'discount'
         for promo in data:
-            self.assertEqual(promo["promotion_type"], "discount")
+            self.assertEqual(promo["promotion_type"], "DISCOUNT")
+
+    def test_query_by_promotion_id(self):
+        """
+        It should return a promotion filtered by promotion_id.
+        """
+        # Query by promotion_id
+        promo = PromotionFactory(promotion_id="36826537")
+        response = self.client.post(BASE_URL, json=promo.serialize())
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        response = self.client.get(f"{BASE_URL}?promotion_id=36826537")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.get_json()
+        self.assertEqual(data[0]["promotion_id"], "36826537")
 
     def test_query_by_multiple_fields(self):
         """It should return promotions filtered by promotion_type and name"""
@@ -225,7 +239,7 @@ class TestPromotionService(TestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
         # Query with two filters
-        response = self.client.get(f"{BASE_URL}?promotion_type=discount&name=TEST1")
+        response = self.client.get(f"{BASE_URL}?promotion_type=DISCOUNT&name=TEST1")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         data = response.get_json()
         self.assertEqual(len(data), 1)
@@ -242,6 +256,54 @@ class TestPromotionService(TestCase):
         # Query by a non-existent field
         response = self.client.get(f"{BASE_URL}?non_existent_field=value")
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_apply_promotion(self):
+        """It should increment the usage count when a promotion is applied"""
+        promo = PromotionFactory(usage_count=0)
+        response = self.client.post(BASE_URL, json=promo.serialize())
+        self.assertEqual(response.status_code, 201)
+        promo_id = response.get_json()["id"]
+
+        # Apply it
+        response = self.client.put(f"{BASE_URL}/{promo_id}/apply")
+        self.assertEqual(response.status_code, 200)
+        data = response.get_json()
+        self.assertEqual(data["usage_count"], 1)
+
+        # Apply it again
+        response = self.client.put(f"{BASE_URL}/{promo_id}/apply")
+        data = response.get_json()
+        self.assertEqual(data["usage_count"], 2)
+
+    def test_apply_non_existent_promotion(self):
+        """
+        It should return 404 when trying to apply a non-existent promotion.
+        """
+        # Attempt to apply a non-existent promotion
+        response = self.client.put(f"{BASE_URL}/999999/apply")
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        data = response.get_json()
+        self.assertIn("not found", data.get("message", "").lower())
+
+    def test_empty_promotion_list(self):
+        """
+        It should return an empty list when no promotions exist in the database.
+        """
+        # Ensure there are no promotions
+        response = self.client.get(BASE_URL)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.get_json()
+        self.assertIsInstance(data, list)
+        self.assertEqual(
+            len(data), 0, "Expected an empty list when no promotions exist"
+        )
+
+    def test_list_promotions_invalid_enum_value(self):
+        """It should return 400 for invalid promotion_type enum value"""
+        response = self.client.get("/promotions?promotion_type=INVALID_ENUM")
+        self.assertEqual(response.status_code, 400)
+        data = response.get_json()
+        self.assertIn("Invalid promotion_type", data["message"])
 
 
 class TestSadPaths(TestCase):
@@ -290,7 +352,7 @@ class TestSadPaths(TestCase):
         logging.debug(new_promotion)
         new_promotion["name"] = "Updated Promotion Name"
         new_promotion["promotion_amount"] = 9999
-        new_promotion["promotion_type"] = "discount"
+        new_promotion["promotion_type"] = "DISCOUNT"
         new_promotion["promotion_description"] = "Updated Description"
 
         # Send an update request
@@ -303,7 +365,7 @@ class TestSadPaths(TestCase):
         updated_promotion = response.get_json()
         self.assertEqual(updated_promotion["name"], "Updated Promotion Name")
         self.assertEqual(updated_promotion["promotion_amount"], 9999)
-        self.assertEqual(updated_promotion["promotion_type"], "discount")
+        self.assertEqual(updated_promotion["promotion_type"], "DISCOUNT")
         self.assertEqual(
             updated_promotion["promotion_description"], "Updated Description"
         )
