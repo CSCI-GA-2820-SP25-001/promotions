@@ -203,14 +203,14 @@ class TestPromotionService(TestCase):
         discount_promo.id = response.get_json()["id"]
 
         # Send the query
-        response = self.client.get(f"{BASE_URL}?promotion_type=discount")
+        response = self.client.get(f"{BASE_URL}?promotion_type=DISCOUNT")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         data = response.get_json()
         self.assertIsInstance(data, list)
 
         # All returned promotions should be 'discount'
         for promo in data:
-            self.assertEqual(promo["promotion_type"], "discount")
+            self.assertEqual(promo["promotion_type"], "DISCOUNT")
 
     def test_query_by_multiple_fields(self):
         """It should return promotions filtered by promotion_type and name"""
@@ -225,7 +225,7 @@ class TestPromotionService(TestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
         # Query with two filters
-        response = self.client.get(f"{BASE_URL}?promotion_type=discount&name=TEST1")
+        response = self.client.get(f"{BASE_URL}?promotion_type=DISCOUNT&name=TEST1")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         data = response.get_json()
         self.assertEqual(len(data), 1)
@@ -290,7 +290,7 @@ class TestSadPaths(TestCase):
         logging.debug(new_promotion)
         new_promotion["name"] = "Updated Promotion Name"
         new_promotion["promotion_amount"] = 9999
-        new_promotion["promotion_type"] = "discount"
+        new_promotion["promotion_type"] = "DISCOUNT"
         new_promotion["promotion_description"] = "Updated Description"
 
         # Send an update request
@@ -303,7 +303,7 @@ class TestSadPaths(TestCase):
         updated_promotion = response.get_json()
         self.assertEqual(updated_promotion["name"], "Updated Promotion Name")
         self.assertEqual(updated_promotion["promotion_amount"], 9999)
-        self.assertEqual(updated_promotion["promotion_type"], "discount")
+        self.assertEqual(updated_promotion["promotion_type"], "DISCOUNT")
         self.assertEqual(
             updated_promotion["promotion_description"], "Updated Description"
         )

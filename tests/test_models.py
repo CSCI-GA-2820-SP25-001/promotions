@@ -79,7 +79,7 @@ class TestPromotion(TestCase):
         self.assertEqual(data.promotion_id, promotion.promotion_id)
         self.assertEqual(data.start_date, promotion.start_date)
         self.assertEqual(data.end_date, promotion.end_date)
-        self.assertEqual(data.promotion_type, promotion.promotion_type)
+        self.assertEqual(data.promotion_type.value, promotion.promotion_type.value)
         self.assertEqual(data.promotion_amount, promotion.promotion_amount)
         self.assertEqual(data.promotion_description, promotion.promotion_description)
 
@@ -189,7 +189,7 @@ class TestPromotion(TestCase):
         self.assertEqual(updated_promotion.promotion_id, "Updated ID")
         self.assertEqual(updated_promotion.start_date, datetime(2025, 3, 15, 0, 0))
         self.assertEqual(updated_promotion.end_date, datetime(2025, 3, 20, 0, 0))
-        self.assertEqual(updated_promotion.promotion_type.value, "discount")
+        self.assertEqual(updated_promotion.promotion_type.value, "DISCOUNT")
         self.assertEqual(updated_promotion.promotion_amount, 9999)
         self.assertEqual(updated_promotion.promotion_description, "Updated Description")
 

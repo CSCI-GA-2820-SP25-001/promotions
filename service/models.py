@@ -42,9 +42,9 @@ class DataValidationError(Exception):
 class PromotionType(Enum):
     """Enumeration of the Promotion types"""
 
-    DISCOUNT = "discount"
-    FLASH = "flash"
-    COUPON = "coupon"
+    DISCOUNT = "DISCOUNT"
+    FLASH = "FLASH"
+    COUPON = "COUPON"
 
 
 class Promotion(db.Model):
