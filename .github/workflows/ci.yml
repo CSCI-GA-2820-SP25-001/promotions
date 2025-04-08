@@ -56,8 +56,9 @@ jobs:
         env:
           FLASK_APP: "wsgi:app"
           DATABASE_URI: "postgresql+psycopg://postgres:pgs3cr3t@postgres:5432/testdb"
-          # - name: Install packages for Codecov to work
-      #   run: apt-get update && apt-get install -y git curl gpg
+    
+      - name: Install packages for Codecov to work
+        run: apt-get update && apt-get install -y git curl gpg
 
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v5
