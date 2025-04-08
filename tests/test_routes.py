@@ -387,6 +387,13 @@ class TestSadPaths(TestCase):
         self.assertIsInstance(data, list)
         self.assertEqual(len(data), 0, "Expected an empty list for a non-existent name")
 
+    def test_cancel_promotion_not_found(self):
+        """It should return 404 if the promotion is not found"""
+        response = self.client.put(f"{BASE_URL}/9999/cancel")
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        data = response.get_json()
+        self.assertIn("was not found", data["message"])
+
     ######################################################################
     #  T E S T   M O C K S
     ######################################################################

@@ -221,3 +221,34 @@ def list_promotions():
     results = [promotion.serialize() for promotion in promotions]
     app.logger.info("Returning %d promotions", len(results))
     return jsonify(results), status.HTTP_200_OK
+
+
+######################################################################
+# CANCEL A PROMOTION (STATEFUL ACTION)
+######################################################################
+@app.route("/promotions/<int:promotion_id>/cancel", methods=["PUT"])
+def cancel_promotion(promotion_id):
+    """Cancel a Promotion by changing its state to 'canceled'"""
+    app.logger.info("Request to cancel promotion with id: %d", promotion_id)
+
+    # Find the promotion
+    promotion = Promotion.find(promotion_id)
+    if not promotion:
+        abort(
+            status.HTTP_404_NOT_FOUND,
+            f"Promotion with id '{promotion_id}' was not found.",
+        )
+
+    # Only cancel if currently active
+    if promotion.state != "active":
+        abort(
+            status.HTTP_409_CONFLICT,
+            f"Promotion with id '{promotion_id}' cannot be canceled because it is not active.",
+        )
+
+    # Perform the state change
+    promotion.state = "canceled"
+    promotion.update()
+
+    app.logger.info("Promotion with ID: %d has been canceled.", promotion_id)
+    return jsonify(promotion.serialize()), status.HTTP_200_OK
