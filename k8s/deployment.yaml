@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: promotions
+  labels:
+    app: promotions
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: promotions
+  template:
+    metadata:
+      labels:
+        app: promotions
+    spec:
+      containers:
+        - name: promotions
+          image: promotions:1.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+              protocol: TCP
+          env:
+            - name: DATABASE_URI
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-creds
+                  key: database-uri
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
