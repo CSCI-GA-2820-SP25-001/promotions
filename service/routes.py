@@ -27,6 +27,15 @@ from service.models import Promotion, PromotionType
 from service.common import status  # HTTP Status Codes
 
 
+############################################################
+# Health Endpoint
+############################################################
+@app.route("/health")
+def health():
+    """Health Status"""
+    return jsonify(status="OK"), 200
+
+
 ######################################################################
 # GET INDEX
 ######################################################################
