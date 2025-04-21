@@ -42,26 +42,7 @@ def health():
 @app.route("/")
 def index():
     """Root URL response with API metadata"""
-    return (
-        jsonify(
-            name="Promotion Demo REST API Service",
-            version="1.0",
-            paths={
-                "list_promotions": url_for("list_promotions", _external=True),
-                "create_promotion": url_for("create_promotions", _external=True),
-                "update_promotion": url_for(
-                    "update_promotion", promotion_id=1, _external=True
-                ),
-                "delete_promotion": url_for(
-                    "delete_promotions", promotion_id=1, _external=True
-                ),
-                "get_promotion": url_for(
-                    "get_promotions", promotion_id=1, _external=True
-                ),
-            },
-        ),
-        status.HTTP_200_OK,
-    )
+    return app.send_static_file("index.html")
 
 
 ######################################################################
