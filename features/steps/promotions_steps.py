@@ -26,10 +26,11 @@ def step_impl(context, promotion_id):
     context.promotion_id = unique_id
 
 
-@when("I store the current promotion ID")
+@then("I store the promotion ID")
 def step_impl(context):
     field = context.driver.find_element(By.ID, "promotion_id")
     context.promotion_id = field.get_attribute("value")
+    print("[Debug] Stored promotion_id:", context.promotion_id)
 
 
 @when("I enter the stored promotion ID")
@@ -93,11 +94,11 @@ def step_impl(context, message):
     assert message.lower() in flash_message.text.lower()
 
 
-@when("I enter the stored internal ID")
-def step_impl(context):
-    field = context.driver.find_element(By.ID, "promotion_id")
-    field.clear()
-    field.send_keys(context.internal_id)
+# @when("I enter the stored internal ID")
+# def step_impl(context):
+#     field = context.driver.find_element(By.ID, "promotion_id")
+#     field.clear()
+#     field.send_keys(context.internal_id)
 
 
 @when('I click the "Search" button')
@@ -113,11 +114,11 @@ def step_impl(context, name):
     assert name in table.text
 
 
-@when('I enter "{id}" as the promotion ID')
-def step_impl(context, id):
-    field = context.driver.find_element(By.ID, "promotion_id")
-    field.clear()
-    field.send_keys(id)
+# @when('I enter "{id}" as the promotion ID')
+# def step_impl(context, id):
+#     field = context.driver.find_element(By.ID, "promotion_id")
+#     field.clear()
+#     field.send_keys(id)
 
 
 @when('I click the "Retrieve" button')
@@ -144,3 +145,10 @@ def step_impl(context, text):
     print("[Debug] Expected:", text)
     print("[Debug] Actual:", name_field.get_attribute("value"))
     assert text in name_field.get_attribute("value")
+
+
+@when('I set the "Description" to "{description}"')
+def step_impl(context, description):
+    input_box = context.driver.find_element(By.ID, "description")
+    input_box.clear()
+    input_box.send_keys(description)
