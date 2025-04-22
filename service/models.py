@@ -129,7 +129,8 @@ class Promotion(db.Model):
             data (dict): A dictionary containing the resource data
         """
         try:
-            if data.get("id") is not None:
+
+            if data.get("id") not in (None, "", "null"):
                 self.id = int(data["id"])
             else:
                 self.id = None
@@ -154,9 +155,7 @@ class Promotion(db.Model):
 
             self.promotion_description = data["promotion_description"]
 
-            self.usage_count = (
-                int(data["usage_count"]) if data.get("usage_count") else 0
-            )
+            self.usage_count = int(data.get("usage_count") or 0)
 
             self.state = data.get("state", "active")  # default to active
 
@@ -172,6 +171,7 @@ class Promotion(db.Model):
                 + str(error)
             ) from error
         except ValueError as error:
+            self.usage_count = 0
             raise DataValidationError(
                 "Invalid Promotion: could not convert data - " + str(error)
             ) from error

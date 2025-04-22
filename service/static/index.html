@@ -11,7 +11,7 @@
   <body>
     <div class="container">
       <div class="page-header">
-          <h1>Promotion Demo REST API Service</h1>
+        <h1>Promotion Demo REST API Service</h1>
       </div>
 
       <!-- Flash Message -->
@@ -26,57 +26,51 @@
         <h3>Create, Retrieve, Update, and Delete a Promotion:</h3>
         <div class="well">
           <div class="form-horizontal">
+
+            <!-- Hidden internal database ID -->
+            <input type="hidden" id="promotion_db_id" />
+
+            <!-- Business Promotion ID -->
             <div class="form-group">
-              <label class="control-label col-sm-2" for="id">Promotion ID:</label>
+              <label class="control-label col-sm-2" for="promotion_id">Promotion ID:</label>
               <div class="col-sm-6">
-                <input type="text" class="form-control" id="id" placeholder="Enter ID of Promotion">
+                <input type="text" class="form-control" id="promotion_id" placeholder="Enter business ID">
               </div>
               <div class="col-sm-4">
                 <button type="submit" class="btn btn-primary" id="retrieve-btn">Retrieve</button>
                 <button type="submit" class="btn btn-danger" id="delete-btn">Delete</button>
               </div>
             </div>
-          </div> <!-- form horizontal -->
 
-          <div class="form-horizontal">
-
-            <!-- promotion_name -->
+            <!-- Name -->
             <div class="form-group">
-              <label class="control-label col-sm-2" for="promotion_name">Name:</label>
+              <label class="control-label col-sm-2" for="name">Name:</label>
               <div class="col-sm-10">
                 <input type="text" class="form-control" id="promotion_name" placeholder="Enter name for Promotion">
               </div>
             </div>
 
-            <!-- promotion_promotion_id -->
+            <!-- Start Date -->
             <div class="form-group">
-              <label class="control-label col-sm-2" for="promotion_promotion_id">ID:</label>
+              <label class="control-label col-sm-2" for="start_date">Start Date:</label>
               <div class="col-sm-10">
-                <input type="text" class="form-control" id="promotion_promotion_id" placeholder="Enter id for Promotion">
+                <input type="date" class="form-control" id="start_date" placeholder="2020-04-01">
               </div>
             </div>
 
-            <!-- promotion_start_date -->
+            <!-- End Date -->
             <div class="form-group">
-              <label class="control-label col-sm-2" for="promotion_start_date">Start:</label>
+              <label class="control-label col-sm-2" for="end_date">End Date:</label>
               <div class="col-sm-10">
-                <input type="date" class="form-control" id="promotion_start_date" placeholder="2020-04-01">
+                <input type="date" class="form-control" id="end_date" placeholder="2020-04-01">
               </div>
             </div>
 
-            <!-- promotion_end_date -->
+            <!-- Type -->
             <div class="form-group">
-              <label class="control-label col-sm-2" for="promotion_end_date">End:</label>
+              <label class="control-label col-sm-2" for="type">Type:</label>
               <div class="col-sm-10">
-                <input type="date" class="form-control" id="promotion_end_date" placeholder="2020-04-01">
-              </div>
-            </div>
-
-            <!-- promotion_promotion_type -->
-            <div class="form-group">
-              <label class="control-label col-sm-2" for="promotion_promotion_type">State:</label>
-              <div class="col-sm-10">
-                <select class="form-control" id="promotion_promotion_type">
+                <select class="form-control" id="type">
                   <option value="DISCOUNT" selected>DISCOUNT</option>
                   <option value="FLASH">FLASH</option>
                   <option value="COUPON">COUPON</option>
@@ -84,35 +78,35 @@
               </div>
             </div>
 
-            <!-- promotion_promotion_amount -->
+            <!-- Amount -->
             <div class="form-group">
-              <label class="control-label col-sm-2" for="promotion_promotion_amount">Amount:</label>
+              <label class="control-label col-sm-2" for="amount">Amount:</label>
               <div class="col-sm-10">
-                <input type="text" class="form-control" id="promotion_promotion_amount" placeholder="Enter amount for Promotion">
+                <input type="text" class="form-control" id="amount" placeholder="Enter amount">
               </div>
             </div>
 
-            <!-- promotion_description -->
+            <!-- Description -->
             <div class="form-group">
-              <label class="control-label col-sm-2" for="promotion_promotion_description">Description:</label>
+              <label class="control-label col-sm-2" for="description">Description:</label>
               <div class="col-sm-10">
-                <input type="text" class="form-control" id="promotion_promotion_description" placeholder="Enter description for Promotion">
+                <input type="text" class="form-control" id="description" placeholder="Enter description">
               </div>
             </div>
 
-            <!-- promotion_usage_count -->
+            <!-- Usage Count -->
             <div class="form-group">
-              <label class="control-label col-sm-2" for="promotion_usage_count">Usage:</label>
+              <label class="control-label col-sm-2" for="usage">Usage Count:</label>
               <div class="col-sm-10">
-                <input type="text" class="form-control" id="promotion_usage_count" placeholder=0>
+                <input type="number" class="form-control" id="usage" placeholder="0">
               </div>
             </div>
 
-            <!-- promotion_state -->
+            <!-- State -->
             <div class="form-group">
-              <label class="control-label col-sm-2" for="promotion_state">State:</label>
+              <label class="control-label col-sm-2" for="state">State:</label>
               <div class="col-sm-10">
-                <select class="form-control" id="promotion_state">
+                <select class="form-control" id="state">
                   <option value="UNKNOWN" selected>Unknown</option>
                   <option value="Active">Active</option>
                   <option value="Inactive">Inactive</option>
@@ -120,36 +114,37 @@
               </div>
             </div>
 
-            <!-- SUBMIT BUTTONS -->
+            <!-- Buttons -->
             <div class="form-group">
               <div class="col-sm-offset-2 col-sm-10">
                 <button type="submit" class="btn btn-primary" id="search-btn">Search</button>
-                <button type="submit" class="btn btn-primary" id="clear-btn">Clear</button>
+                <button type="submit" class="btn btn-default" id="clear-btn">Clear</button>
                 <button type="submit" class="btn btn-success" id="create-btn">Create</button>
                 <button type="submit" class="btn btn-warning" id="update-btn">Update</button>
               </div>
             </div>
-          </div> <!-- form horizontal -->
-        </div> <!-- end well -->
-      </div> <!-- end Form -->
+
+          </div> <!-- form-horizontal -->
+        </div> <!-- well -->
+      </div> <!-- form_data -->
 
       <!-- Search Results -->
       <div class="table-responsive col-md-12" id="search_results">
         <table class="table table-striped">
           <thead>
-          <tr>
-            <th class="col-md-1">Promotion ID</th>
-            <th class="col-md-4">Name</th>
-            <th class="col-md-4">ID</th>
-            <th class="col-md-3">Start</th>
-            <th class="col-md-3">End</th>
-            <th class="col-md-3">Type</th>
-            <th class="col-md-3">Amount</th>
-            <th class="col-md-3">Description</th>
-            <th class="col-md-3">Usage</th>
-            <th class="col-md-3">State</th>
-          </tr>
+            <tr>
+              <th>Promotion ID</th>
+              <th>Name</th>
+              <th>Start</th>
+              <th>End</th>
+              <th>Type</th>
+              <th>Amount</th>
+              <th>Description</th>
+              <th>Usage</th>
+              <th>State</th>
+            </tr>
           </thead>
+          <tbody></tbody>
         </table>
       </div>
 
@@ -157,14 +152,10 @@
         <br><br>
         <p>&copy; NYU DevOps Company 2022</p>
       </footer>
+    </div>
 
-    </div> <!-- container -->
-
-  <script type="text/javascript" src = "static/js/jquery-3.6.0.min.js"></script>
-  <script type="text/javascript" src = "static/js/bootstrap.min.js"></script>
-
-  <!-- YOUR REST API -->
-  <script type="text/javascript" src="static/js/rest_api.js"></script>
-
+    <script type="text/javascript" src="static/js/jquery-3.6.0.min.js"></script>
+    <script type="text/javascript" src="static/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="static/js/rest_api.js"></script>
   </body>
 </html>
