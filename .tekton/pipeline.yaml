@@ -1,0 +1,30 @@
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: cd-pipeline
+spec:
+  params:
+    - name: GIT_REPO
+      type: string
+    - name: GIT_REF
+      type: string
+    - name: APP_NAME
+      type: string
+    - name: IMAGE_NAME
+      type: string
+  workspaces:
+    - name: pipeline-workspace
+  tasks:
+    - name: git-clone
+      taskRef:
+        name: git-clone
+      workspaces:
+        - name: output
+          workspace: pipeline-workspace
+
+    - name: pylint
+      taskRef:
+        name: pylint
+      workspaces:
+        - name: source
+          workspace: pipeline-workspace
