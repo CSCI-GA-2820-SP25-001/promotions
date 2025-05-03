@@ -3,41 +3,52 @@ Feature: Promotions Management UI
   I want to manage promotions via the Admin UI
   So that I can control lifecycle of promotions effectively
 
-  Background:
-    Given I am on the "Promotions Page"
+Background:
+    When I visit the "Promotions Page"
 
-  Scenario: Create a new promotion
-    When I enter "Spring Sale" as the promotion name
-    And I set the "Promotion ID" to "SPRING001-<timestamp>"
-    And I set the "Status" to "Active"
+Scenario: Create a new promotion
+    And I set the "Promotion Name" to "Spring Sale"
+    And I set the "Promotion ID" to "SPRING001"
+    And I select "Active" in the "State" dropdown
     And I set the "Amount" to "10.5"
     And I set the "Start Date" to "2025-04-23"
     And I set the "End Date" to "2025-04-30"
     And I set the "Description" to "Seasonal discount for all items"
-    And I click the "Create" button
-    Then I should see a confirmation message "Promotion created successfully"
-    Then I store the promotion ID
-    When I click the "Search" button
-    Then I should see "Spring Sale" in the promotion list
+    And I select "DISCOUNT" in the "Type" dropdown
+    And I set the "Usage" to "100"
 
-  Scenario: Retrieve a promotion by ID
-    When I enter the stored promotion ID
-    And I click the "Retrieve" button
-    Then I should see the promotion name field containing "Spring Sale"
+    And I press the "Create" button
+    Then I should see the message "Promotion created successfully"
 
-  Scenario: Update a promotion
-    When I enter the stored promotion ID
-    And I click the "Retrieve" button
-    And I enter "Spring Sale Updated" as the promotion name
-    And I click the "Update" button
-    Then I should see a confirmation message "Promotion updated successfully"
+    When I copy the "Promotion ID" field
+    And I press the "Clear" button
+    Then the "Promotion ID" field should be empty
+    And the "Promotion Name" field should be empty
 
-  Scenario: Delete a promotion
-    When I enter the stored promotion ID
-    And I click the "Delete" button
-    Then I should see a confirmation message "Promotion has been Deleted!"
+    When I paste the "Promotion ID" field
+    And I press the "Retrieve" button
+    Then I should see the message "Promotion retrieved successfully"
+    And I should see "Spring Sale" in the "Promotion Name" field
 
-  Scenario: Search for a promotion by name
-    When I enter "Spring Sale Updated" as the promotion name
-    And I click the "Search" button
-    Then I should see "Spring Sale Updated" in the promotion list
+Scenario: Update the promotion
+    When I visit the "Promotions Page"
+    And I paste the "Promotion ID" field
+    And I press the "Retrieve" button
+    Then I should see "Spring Sale" in the "Promotion Name" field
+
+    When I change "Promotion Name" to "Spring Sale Updated"
+    And I press the "Update" button
+    Then I should see the message "Promotion updated successfully"
+
+Scenario: Search for the promotion
+    When I visit the "Promotions Page"
+    And I set the "Promotion Name" to "Spring Sale Updated"
+    And I press the "Search" button
+    Then I should see the message "Promotion found"
+    And I should see "Spring Sale Updated" in the results
+
+Scenario: Delete the promotion
+    When I visit the "Promotions Page"
+    And I paste the "Promotion ID" field
+    And I press the "Delete" button
+    Then I should see the message "Promotion has been Deleted!"
