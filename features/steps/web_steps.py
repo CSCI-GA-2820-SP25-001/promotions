@@ -1,3 +1,4 @@
+from time import time
 from behave import when, then
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import Select, WebDriverWait
@@ -19,17 +20,29 @@ def step_impl(context):
     assert "Promotion" in context.driver.title
 
 
-@when('I copy the "Promotion ID" field')
+@when('I copy the "ID" field')
 def step_impl(context):
-    context.clipboard = context.driver.find_element(
-        By.ID, "promotion_id"
+    context.feature_clipboard = context.driver.find_element(
+        By.ID, "promotion_db_id"
     ).get_attribute("value")
 
 
-@then('the "Promotion ID" field should be empty')
+@when('I paste the "ID" field')
+def step_impl(context):
+    field = context.driver.find_element(By.ID, "promotion_db_id")
+    field.clear()
+    clipboard_val = context.driver.find_element(By.ID, "id_clipboard").get_attribute(
+        "value"
+    )
+    print(f"[Debug] Clipboard value from hidden input: '{clipboard_val}'")
+    field.send_keys(context.shared_db_id)
+
+
+@then('the "ID" field should be empty')
 def step_impl(context):
     assert (
-        context.driver.find_element(By.ID, "promotion_id").get_attribute("value") == ""
+        context.driver.find_element(By.ID, "promotion_db_id").get_attribute("value")
+        == ""
     )
 
 
@@ -41,14 +54,15 @@ def step_impl(context):
     )
 
 
-@when('I paste the "Promotion ID" field')
-def step_impl(context):
-    context.driver.find_element(By.ID, "promotion_id").send_keys(context.clipboard)
-
-
 @then('I should see "Spring Sale" in the "Promotion Name" field')
 def step_impl(context):
+    # Wait for the element to be present
+    WebDriverWait(context.driver, 10).until(
+        EC.presence_of_element_located((By.ID, "promotion_name"))
+    )
+    # Check the value of the "Promotion Name" field
     value = context.driver.find_element(By.ID, "promotion_name").get_attribute("value")
+    print(f"[Debug] Promotion Name field value: '{value}'")
     assert "Spring Sale" in value
 
 
@@ -69,8 +83,12 @@ def step_impl(context):
 def step_impl(context, field_name, value):
     field_id = field_name.lower().replace(" ", "_")
     input_element = context.driver.find_element(By.ID, field_id)
-    input_element.clear()
-    input_element.send_keys(value)
+
+    if "date" in field_id:
+        context.driver.execute_script(f"arguments[0].value = '{value}';", input_element)
+    else:
+        input_element.clear()
+        input_element.send_keys(value)
 
 
 @when('I select "{option}" in the "{dropdown}" dropdown')
@@ -82,7 +100,14 @@ def step_impl(context, option, dropdown):
 
 @when('I press the "{button}" button')
 def step_impl(context, button):
+    import time
+
     button_id = button.lower().replace(" ", "_") + "-btn"
+    WebDriverWait(context.driver, 10).until(
+        EC.element_to_be_clickable((By.ID, button_id))
+    )
+    time.sleep(1)
+    print(f"[Debug] Clicking button: {button} (id: {button_id})")
     context.driver.find_element(By.ID, button_id).click()
 
 
@@ -93,10 +118,31 @@ def step_impl(context, text):
 
 @then('I should see the message "{message}"')
 def step_impl(context, message):
-    # 等待 flash_message 元素包含目标文本
-    WebDriverWait(context.driver, 5).until(
-        EC.text_to_be_present_in_element((By.ID, "flash_message"), message)
-    )
+    try:
+        WebDriverWait(context.driver, 5).until(
+            EC.text_to_be_present_in_element((By.ID, "flash_message"), message)
+        )
+    except Exception as e:
+        flash = context.driver.find_element(By.ID, "flash_message")
+        print(
+            f"[Timeout Debug] flash_message content: '{flash.text}' (expecting: '{message}')"
+        )
+        raise e
+    context.shared_db_id = context.driver.find_element(
+        By.ID, "promotion_db_id"
+    ).get_attribute("value")
+    print(f"[Debug] Shared DB ID: {context.shared_db_id}")
     flash = context.driver.find_element(By.ID, "flash_message")
-    print(f"[Debug] Flash message: {flash.text}")
     assert message.lower() in flash.text.lower()
+
+
+@when('I generate a unique Promotion ID with prefix "{prefix}"')
+def step_impl(context, prefix):
+    context.generated_promotion_id = f"{prefix}-{int(time())}"
+
+
+@when('I set the "Promotion ID" to the generated ID')
+def step_impl(context):
+    promotion_id_field = context.driver.find_element(By.ID, "promotion_id")
+    promotion_id_field.clear()
+    promotion_id_field.send_keys(context.generated_promotion_id)

@@ -1,4 +1,5 @@
 $(function () {
+    console.log("[Debug] ✅ rest_api.js fully loaded");
 
     // ****************************************
     //  U T I L I T Y   F U N C T I O N S
@@ -6,6 +7,7 @@ $(function () {
 
     // Updates the form with data from the response
     function update_form_data(res) {
+        $("#promotion_db_id").val(res.id);
         $("#promotion_id").val(res.promotion_id);                    // HTML ID: promotion_id
         $("#promotion_name").val(res.name);                          // HTML ID: promotion_name
         $("#start_date").val(res.start_date.slice(0, 10));           // HTML ID: start_date
@@ -20,6 +22,7 @@ $(function () {
 
     /// Clears all form fields
     function clear_form_data() {
+        $("#promotion_db_id").val("");
         $("#promotion_id").val("");
         $("#promotion_name").val("");
         $("#start_date").val("");
@@ -41,8 +44,8 @@ $(function () {
     // Create a Promotion
     // ****************************************
 
-    $("#create-btn").click(function () {
-
+    $("#create-btn").click(function (event) {
+        event.preventDefault();
         let name = $("#promotion_name").val();
         let promotion_id = $("#promotion_id").val();
         let start_date = $("#start_date").val();
@@ -53,7 +56,6 @@ $(function () {
         let usage_count = parseInt($("#usage").val()) || 0;
         let state = $("#state").val();
 
-        console.log("[Debug] usage_count = ", usage_count);
         let data = {
             // "id": id,
             "name": name,
@@ -79,12 +81,15 @@ $(function () {
 
         ajax.done(function(res){
             console.log("[Debug] AJAX response:", res);
+            $("#id_clipboard").val(res.id); 
+            console.log("[Debug] Saved to hidden field:", $("#id_clipboard").val());
+
             update_form_data(res)
             flash_message("Promotion created successfully")
-            $("#search-btn").click();
         });
 
         ajax.fail(function(res){
+            console.log("[Debug] Create failed", res);
             flash_message(res.responseJSON.message)
         });
     });
@@ -96,6 +101,7 @@ $(function () {
 
     $("#update-btn").click(function () {
 
+        let id = $("#promotion_db_id").val();
         let name = $("#promotion_name").val();
         let promotion_id = $("#promotion_id").val();
         let start_date = $("#start_date").val();
@@ -107,7 +113,7 @@ $(function () {
         let state = $("#state").val();
 
         let data = {
-            // "id": id,
+            "id": id,
             "name": name,
             "promotion_id": promotion_id,
             "start_date": start_date,
@@ -123,7 +129,7 @@ $(function () {
 
         let ajax = $.ajax({
                 type: "PUT",
-                url: `/promotions/${promotion_id}`,
+                url: `/promotions/${id}`,
                 contentType: "application/json",
                 data: JSON.stringify(data)
             })
@@ -145,23 +151,24 @@ $(function () {
     // ****************************************
 
     $("#retrieve-btn").click(function () {
-        let promotion_id = $("#promotion_id").val(); 
+        let id = $("#promotion_db_id").val();
     
         $("#flash_message").empty();
     
         let ajax = $.ajax({
             type: "GET",
-            url: `/promotions/${promotion_id}`, 
+            url: `/promotions/${id}`, 
             contentType: "application/json"
         });
     
         ajax.done(function(res){
+            console.log("[Retrieve] AJAX response:", res);
             update_form_data(res);
     
-            // ✅ 同步更新 table
             $("#search_results").empty();
             let table = '<table class="table table-striped" cellpadding="10">'
             table += '<thead><tr>'
+            table += '<th>promotion_db_id</th>'
             table += '<th>promotion_id</th>'
             table += '<th>name</th>'
             table += '<th>start_date</th>'
@@ -173,7 +180,7 @@ $(function () {
             table += '<th>state</th>'
             table += '</tr></thead><tbody>'
     
-            table +=  `<tr><td>${res.promotion_id}</td><td>${res.name}</td><td>${res.start_date}</td><td>${res.end_date}</td><td>${res.promotion_type}</td><td>${res.promotion_amount}</td><td>${res.promotion_description}</td><td>${res.usage_count}</td><td>${res.state}</td></tr>`
+            table +=  `<tr><td>${res.id}</td><td>${res.promotion_id}</td><td>${res.name}</td><td>${res.start_date}</td><td>${res.end_date}</td><td>${res.promotion_type}</td><td>${res.promotion_amount}</td><td>${res.promotion_description}</td><td>${res.usage_count}</td><td>${res.state}</td></tr>`
     
             table += '</tbody></table>';
             $("#search_results").append(table);
@@ -193,13 +200,13 @@ $(function () {
 
     $("#delete-btn").click(function () {
 
-        let promotion_id = $("#promotion_id").val();
+        let id = $("#promotion_db_id").val();
 
         $("#flash_message").empty();
 
         let ajax = $.ajax({
             type: "DELETE",
-            url: `/promotions/${promotion_id}`,
+            url: `/promotions/${id}`,
             contentType: "application/json",
             data: '',
         })
@@ -219,7 +226,7 @@ $(function () {
     // ****************************************
 
     $("#clear-btn").click(function () {
-        $("#promotion_id").val("");
+        $("#promotion_db_id").val("");
         $("#flash_message").empty();
         clear_form_data()
     });
@@ -254,6 +261,7 @@ $(function () {
             $("#search_results").empty();
             let table = '<table class="table table-striped" cellpadding="10">'
             table += '<thead><tr>'
+            table += '<th class="col-md-2">promotion_db_id</th>'
             table += '<th class="col-md-2">promotion_id</th>'
             table += '<th class="col-md-2">name</th>'
             table += '<th class="col-md-2">start_date</th>'
@@ -267,7 +275,7 @@ $(function () {
             let firstPromotion = "";
             for(let i = 0; i < res.length; i++) {
                 let promotion = res[i];
-                table +=  `<tr id="row_${i}"><td>${promotion.promotion_id}</td><td>${promotion.name}</td><td>${promotion.start_date}</td><td>${promotion.end_date}</td><td>${promotion.promotion_type}</td><td>${promotion.promotion_amount}</td><td>${promotion.promotion_description}</td><td>${promotion.usage_count}</td><td>${promotion.state}</td></tr>`;
+                table +=  `<tr id="row_${i}"><td>${promotion.id}</td><td>${promotion.promotion_id}</td><td>${promotion.name}</td><td>${promotion.start_date}</td><td>${promotion.end_date}</td><td>${promotion.promotion_type}</td><td>${promotion.promotion_amount}</td><td>${promotion.promotion_description}</td><td>${promotion.usage_count}</td><td>${promotion.state}</td></tr>`;
                 if (i == 0) {
                     firstPromotion = promotion;
                 }
@@ -280,7 +288,7 @@ $(function () {
                 update_form_data(firstPromotion)
             }
 
-            flash_message("Promotion found");
+            flash_message("Promotion found!!!");
         });
 
         ajax.fail(function(res){

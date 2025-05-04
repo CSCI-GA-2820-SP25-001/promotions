@@ -67,8 +67,10 @@ def create_promotions():
     app.logger.info("Promotion with new id [%s] saved!", promotion.id)
 
     # Return the location of the new Promotion
-    # location_url = url_for("get_promotions", promotion_id=promotion.id, _external=True)
-    location_url = "unknown"
+    location_url = request.url + "/" + str(promotion.id)
+    app.logger.info("Promotion with ID [%s] created", promotion.id)
+    app.logger.info("Promotion with ID [%s] location: %s", promotion.id, location_url)
+    app.logger.info("Promotion with ID [%s] serialized: %s", promotion.id, message)
 
     return (
         jsonify(message),

@@ -22,6 +22,7 @@ def before_all(context):
     context.driver.implicitly_wait(context.wait_seconds)
     context.driver.set_window_size(1280, 1300)
     context.config.setup_logging()
+    context.shared_db_id = None
 
 
 def after_all(context):
