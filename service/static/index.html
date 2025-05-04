@@ -27,18 +27,24 @@
         <div class="well">
           <div class="form-horizontal">
 
-            <!-- Hidden internal database ID -->
-            <input type="hidden" id="promotion_db_id" />
+            <!-- Database Promotion ID -->
+            <div class="form-group">
+              <label class="control-label col-sm-2" for="promotion_db_id">ID:</label>
+              <div class="col-sm-6">
+                <input type="hidden" id="id_clipboard" />
+                <input type="text" class="form-control" id="promotion_db_id" placeholder="Enter database ID">
+              </div>
+              <div class="col-sm-4">
+                <button type="submit" class="btn btn-primary" id="retrieve-btn">Retrieve</button>
+                <button type="submit" class="btn btn-danger" id="delete-btn">Delete</button>
+              </div>
+            </div>
 
             <!-- Business Promotion ID -->
             <div class="form-group">
               <label class="control-label col-sm-2" for="promotion_id">Promotion ID:</label>
               <div class="col-sm-6">
                 <input type="text" class="form-control" id="promotion_id" placeholder="Enter business ID">
-              </div>
-              <div class="col-sm-4">
-                <button type="submit" class="btn btn-primary" id="retrieve-btn">Retrieve</button>
-                <button type="submit" class="btn btn-danger" id="delete-btn">Delete</button>
               </div>
             </div>
 
@@ -133,6 +139,7 @@
         <table class="table table-striped">
           <thead>
             <tr>
+              <th>Database ID</th>
               <th>Promotion ID</th>
               <th>Name</th>
               <th>Start</th>

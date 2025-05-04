@@ -1,154 +1,67 @@
+from time import time
+import requests
+from compare3 import expect
 from behave import given, when, then
-from selenium.webdriver.common.by import By
-import time
+
+API_URL = "http://localhost:8081/promotions"
 
 
-@given('I am on the "Promotions Page"')
+@given("the promotion service is available")
 def step_impl(context):
-    context.driver.get(context.base_url + "/")
-    time.sleep(1)
-    assert "Promotion" in context.driver.title
+    response = requests.get(API_URL)
+    expect(response.status_code).to_equal(200)
 
 
-@when('I enter "{text}" as the promotion name')
-def step_impl(context, text):
-    name_input = context.driver.find_element(By.ID, "promotion_name")
-    name_input.clear()
-    name_input.send_keys(text)
+@when('I create a promotion with name "{name}" and ID prefix "{pid_prefix}"')
+def step_impl(context, name, pid_prefix):
+    unique_pid = f"{pid_prefix}-{int(time())}"
+    context.promotion_id = unique_pid
+    payload = {
+        "name": name,
+        "promotion_id": unique_pid,
+        "start_date": "2025-04-23",
+        "end_date": "2025-04-30",
+        "promotion_type": "DISCOUNT",
+        "promotion_amount": 10.0,
+        "promotion_description": "Seasonal discount for all items",
+        "usage_count": 100,
+        "state": "Active",
+    }
+    context.response = requests.post(API_URL, json=payload)
+    expect(context.response.status_code).to_equal(201)
+    context.result = context.response.json()
+    context.id = context.result["id"]
 
 
-@when('I set the "Promotion ID" to "{promotion_id}"')
-def step_impl(context, promotion_id):
-    unique_id = f"{promotion_id}-{int(time.time() % 10000)}"
-    field = context.driver.find_element(By.ID, "promotion_id")
-    field.clear()
-    field.send_keys(unique_id)
-    context.promotion_id = unique_id
+@then("the response code should be {code:d}")
+def step_impl(context, code):
+    expect(context.response.status_code).to_equal(code)
 
 
-@then("I store the promotion ID")
-def step_impl(context):
-    field = context.driver.find_element(By.ID, "promotion_id")
-    context.promotion_id = field.get_attribute("value")
-    print("[Debug] Stored promotion_id:", context.promotion_id)
-
-
-@when("I enter the stored promotion ID")
-def step_impl(context):
-    field = context.driver.find_element(By.ID, "promotion_id")
-    field.clear()
-    field.send_keys(context.promotion_id)
-
-
-@when('I set the "Status" to "{status}"')
-def step_impl(context, status):
-    dropdown = context.driver.find_element(By.ID, "state")
-    for option in dropdown.find_elements(By.TAG_NAME, "option"):
-        if option.text.lower() == status.lower():
-            option.click()
-            break
-
-
-@when('I set the "Amount" to "{amount}"')
-def step_impl(context, amount):
-    input_box = context.driver.find_element(By.ID, "amount")
-    input_box.clear()
-    input_box.send_keys(amount)
-
-
-@when('I set the "Start Date" to "{start_date}"')
-def step_impl(context, start_date):
-    field = context.driver.find_element(By.ID, "start_date")
-    context.driver.execute_script(f"arguments[0].value = '{start_date}';", field)
-
-
-@when('I set the "End Date" to "{end_date}"')
-def step_impl(context, end_date):
-    field = context.driver.find_element(By.ID, "end_date")
-    context.driver.execute_script(f"arguments[0].value = '{end_date}';", field)
-
-
-@when('I click the "Create" button')
-def step_impl(context):
-    context.driver.find_element(By.ID, "create-btn").click()
-    time.sleep(1)
-
-
-# @when("I store the internal promotion ID")
-# def step_impl(context):
-#     field = context.driver.find_element(By.ID, "promotion_db_id")
-#     context.internal_id = field.get_attribute("value")
-
-
-# @then("I store the internal promotion ID")
-# def step_impl(context):
-#     field = context.driver.find_element(By.ID, "promotion_db_id")
-#     context.internal_id = field.get_attribute("value")
-#     print("[Debug] Stored internal ID:", context.internal_id)
-
-
-@then('I should see a confirmation message "{message}"')
-def step_impl(context, message):
-    flash_message = context.driver.find_element(By.ID, "flash_message")
-    print("[Debug] Flash message text is:", flash_message.text)
-    assert message.lower() in flash_message.text.lower()
-
-
-# @when("I enter the stored internal ID")
-# def step_impl(context):
-#     field = context.driver.find_element(By.ID, "promotion_id")
-#     field.clear()
-#     field.send_keys(context.internal_id)
-
-
-@when('I click the "Search" button')
-def step_impl(context):
-    context.driver.find_element(By.ID, "search-btn").click()
-    time.sleep(1)
-
-
-@then('I should see "{name}" in the promotion list')
+@then('the response should contain name "{name}"')
 def step_impl(context, name):
-    table = context.driver.find_element(By.CSS_SELECTOR, "#search_results table")
-    print("[Debug] Table text:", table.text)
-    assert name in table.text
+    expect(context.result["name"]).to_equal(name)
 
 
-# @when('I enter "{id}" as the promotion ID')
-# def step_impl(context, id):
-#     field = context.driver.find_element(By.ID, "promotion_id")
-#     field.clear()
-#     field.send_keys(id)
+@then('the response should contain promotion ID "{pid}"')
+def step_impl(context, pid):
+    expect(context.result["promotion_id"]).to_equal(pid)
 
 
-@when('I click the "Retrieve" button')
+@when("I retrieve the promotion by database ID")
 def step_impl(context):
-    context.driver.find_element(By.ID, "retrieve-btn").click()
-    time.sleep(1)
+    context.response = requests.get(f"{API_URL}/{context.id}")
+    expect(context.response.status_code).to_equal(200)
+    context.result = context.response.json()
 
 
-@when('I click the "Update" button')
+@when("I delete the promotion by database ID")
 def step_impl(context):
-    context.driver.find_element(By.ID, "update-btn").click()
-    time.sleep(1)
+    context.response = requests.delete(f"{API_URL}/{context.id}")
+    expect(context.response.status_code).to_equal(204)
 
 
-@when('I click the "Delete" button')
+@then("the promotion should not be found")
 def step_impl(context):
-    context.driver.find_element(By.ID, "delete-btn").click()
-    time.sleep(1)
-
-
-@then('I should see the promotion name field containing "{text}"')
-def step_impl(context, text):
-    name_field = context.driver.find_element(By.ID, "promotion_name")
-    print("[Debug] Expected:", text)
-    print("[Debug] Actual:", name_field.get_attribute("value"))
-    assert text in name_field.get_attribute("value")
-
-
-@when('I set the "Description" to "{description}"')
-def step_impl(context, description):
-    input_box = context.driver.find_element(By.ID, "description")
-    input_box.clear()
-    input_box.send_keys(description)
+    response = requests.get(f"{API_URL}/{context.id}")
+    expect(response.status_code).to_equal(404)
