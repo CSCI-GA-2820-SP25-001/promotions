@@ -15,86 +15,88 @@
 ######################################################################
 """
 Module: error_handlers
+Centralized Flask error handling.
 """
-from flask import jsonify
-from flask import current_app as app  # Import Flask application
-from service.models import DataValidationError
-from . import status
+from http import HTTPStatus
 
+from flask import jsonify
+from flask import current_app as app  # Flask application instance
+
+from service.models import DataValidationError
 
 ######################################################################
 # Error Handlers
 ######################################################################
+
+
 @app.errorhandler(DataValidationError)
 def request_validation_error(error):
-    """Handles Value Errors from bad data"""
+    """Handles validation errors raised by the model layer."""
     return bad_request(error)
 
 
-@app.errorhandler(status.HTTP_400_BAD_REQUEST)
+@app.errorhandler(HTTPStatus.BAD_REQUEST)
 def bad_request(error):
-    """Handles bad requests with 400_BAD_REQUEST"""
+    """400 – Bad Request"""
     message = str(error)
     app.logger.warning(message)
     return (
-        jsonify(
-            status=status.HTTP_400_BAD_REQUEST, error="Bad Request", message=message
-        ),
-        status.HTTP_400_BAD_REQUEST,
+        jsonify(status=HTTPStatus.BAD_REQUEST, error="Bad Request", message=message),
+        HTTPStatus.BAD_REQUEST,
     )
 
 
-@app.errorhandler(status.HTTP_404_NOT_FOUND)
+@app.errorhandler(HTTPStatus.NOT_FOUND)
 def not_found(error):
-    """Handles resources not found with 404_NOT_FOUND"""
+    """404 – Resource Not Found"""
     message = str(error)
     app.logger.warning(message)
     return (
-        jsonify(status=status.HTTP_404_NOT_FOUND, error="Not Found", message=message),
-        status.HTTP_404_NOT_FOUND,
+        jsonify(status=HTTPStatus.NOT_FOUND, error="Not Found", message=message),
+        HTTPStatus.NOT_FOUND,
     )
 
 
-@app.errorhandler(status.HTTP_405_METHOD_NOT_ALLOWED)
-def method_not_supported(error):
-    """Handles unsupported HTTP methods with 405_METHOD_NOT_SUPPORTED"""
-    message = str(error)
-    app.logger.warning(message)
-    return (
-        jsonify(
-            status=status.HTTP_405_METHOD_NOT_ALLOWED,
-            error="Method not Allowed",
-            message=message,
-        ),
-        status.HTTP_405_METHOD_NOT_ALLOWED,
-    )
-
-
-@app.errorhandler(status.HTTP_415_UNSUPPORTED_MEDIA_TYPE)
-def mediatype_not_supported(error):
-    """Handles unsupported media requests with 415_UNSUPPORTED_MEDIA_TYPE"""
+@app.errorhandler(HTTPStatus.METHOD_NOT_ALLOWED)
+def method_not_allowed(error):
+    """405 – Method Not Allowed"""
     message = str(error)
     app.logger.warning(message)
     return (
         jsonify(
-            status=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
-            error="Unsupported media type",
+            status=HTTPStatus.METHOD_NOT_ALLOWED,
+            error="Method Not Allowed",
             message=message,
         ),
-        status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+        HTTPStatus.METHOD_NOT_ALLOWED,
     )
 
 
-@app.errorhandler(status.HTTP_500_INTERNAL_SERVER_ERROR)
+@app.errorhandler(HTTPStatus.UNSUPPORTED_MEDIA_TYPE)
+def unsupported_media_type(error):
+    """415 – Unsupported Media Type"""
+    message = str(error)
+    app.logger.warning(message)
+    return (
+        jsonify(
+            status=HTTPStatus.UNSUPPORTED_MEDIA_TYPE,
+            error="Unsupported Media Type",
+            message=message,
+        ),
+        HTTPStatus.UNSUPPORTED_MEDIA_TYPE,
+    )
+
+
+@app.errorhandler(HTTPStatus.INTERNAL_SERVER_ERROR)
 def internal_server_error(error):
-    """Handles unexpected server error with 500_SERVER_ERROR"""
+    """500 – Internal Server Error"""
     message = str(error)
     app.logger.error(message)
     return (
         jsonify(
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            status=HTTPStatus.INTERNAL_SERVER_ERROR,
             error="Internal Server Error",
             message=message,
         ),
-        status.HTTP_500_INTERNAL_SERVER_ERROR,
+        HTTPStatus.INTERNAL_SERVER_ERROR,
     )
