@@ -258,3 +258,36 @@ spec:
         pip install behave requests
         echo "=== running behave tests against $BASE_URL ==="
         behave
+
+---
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: apply-manifests
+  labels:
+    app.kubernetes.io/version: "0.1"
+  annotations:
+    tekton.dev/categories: Deployment
+    tekton.dev/pipelines.minVersion: "0.17.0"
+    tekton.dev/tags: kubectl, deploy
+    tekton.dev/displayName: "Apply Manifests"
+    tekton.dev/platforms: "linux/amd64"
+spec:
+  description: Recursively apply all Kubernetes manifests from a given directory
+  params:
+    - name: manifest-dir
+      type: string
+      description: Path (relative to workspace) containing your manifests
+      default: "k8s"
+  workspaces:
+    - name: source
+      description: The git-clone workspace
+  steps:
+    - name: kubectl-apply
+      image: bitnami/kubectl:latest
+      workingDir: $(workspaces.source.path)
+      script: |
+        #!/usr/bin/env bash
+        set -e
+        echo "🔄 Applying manifests from $(params.manifest-dir)..."
+        kubectl apply -R -f $(params.manifest-dir)

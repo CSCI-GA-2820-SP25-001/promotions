@@ -63,25 +63,25 @@ spec:
         - name: IMAGE
           value: $(params.IMAGE_NAME)
 
-    # --- 5. deploy to cluster ----------------------------------------------
-    - name: deploy
-      taskRef:
-        name: deploy-image
+    # --- 5. deploy all k8s manifests ----------------------------------------
+    - name: deploy-manifests
       runAfter:
         - build-image
+      taskRef:
+        name: apply-manifests
       workspaces:
         - name: source
           workspace: pipeline-workspace
       params:
-        - name: image-name
-          value: $(params.IMAGE_NAME)
+        - name: manifest-dir
+          value: "k8s"
 
     # --- 6. BDD tests against deployment -----------------------------------
     - name: run-bdd
       taskRef:
         name: behave-test
       runAfter:
-        - deploy
+        - deploy-manifests
       workspaces:
         - name: source
           workspace: pipeline-workspace
