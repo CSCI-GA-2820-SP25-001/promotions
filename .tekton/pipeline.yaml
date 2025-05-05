@@ -12,6 +12,8 @@ spec:
       type: string
     - name: IMAGE_NAME
       type: string
+    - name: BASE_URL
+      type: string
   workspaces:
     - name: pipeline-workspace
   tasks:
@@ -33,4 +35,50 @@ spec:
       workspaces:
         - name: source
           workspace: pipeline-workspace
+
+    - name: run-tests
+      taskRef:
+        name: pytest-env
+      runAfter:
+        - pylint
+      workspaces:
+        - name: source
+          workspace: pipeline-workspace
+    
+    - name: build-image
+      taskRef:
+        name: build-and-push
+      runAfter:
+        - run-tests
+      workspaces:
+        - name: source
+          workspace: pipeline-workspace
+      params:
+        - name: IMAGE
+          value: $(params.IMAGE_NAME)
+    
+    - name: deploy
+      taskRef:
+        name: deploy-image
+      runAfter:
+        - build-image
+      workspaces:
+        - name: source
+          workspace: pipeline-workspace
+      params:
+        - name: image-name
+          value: $(params.IMAGE_NAME)
+
+    - name: run-bdd
+      taskRef:
+        name: behave-test
+      runAfter:
+        - deploy
+      workspaces:
+        - name: source
+          workspace: pipeline-workspace
+      params:
+        - name: BASE_URL
+          value: $(params.BASE_URL)
+
 

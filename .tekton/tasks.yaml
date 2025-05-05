@@ -233,3 +233,76 @@ spec:
           echo Applying manifests in $(inputs.params.manifest-dir) directory
           oc apply -f $(inputs.params.manifest-dir)
           echo -----------------------------------
+
+---
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: build-and-push
+  labels:
+    app.kubernetes.io/version: "0.1"
+  annotations:
+    tekton.dev/categories: Image Build
+    tekton.dev/tags: docker
+    tekton.dev/displayName: "Build and Push Image"
+spec:
+  params:
+    - name: IMAGE
+      description: The full image name including registry
+      type: string
+  workspaces:
+    - name: source
+      description: The workspace with your source code and Dockerfile
+  steps:
+    - name: build-and-push
+      image: quay.io/buildah/stable:latest
+      securityContext:
+        privileged: true
+      workingDir: /workspace/source
+      script: |
+        #!/bin/bash
+        set -e
+
+        echo "===== Building Image ====="
+        buildah bud -f Dockerfile -t $(params.IMAGE) .
+
+        echo "===== Pushing Image ====="
+        buildah push $(params.IMAGE)
+
+---
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: behave-test
+  labels:
+    app.kubernetes.io/version: "0.1"
+  annotations:
+    tekton.dev/categories: Testing
+    tekton.dev/tags: python, behave
+    tekton.dev/displayName: "Run Behave BDD Tests"
+spec:
+  params:
+    - name: BASE_URL
+      type: string
+      description: The base URL of the deployed service
+  workspaces:
+    - name: source
+      description: The workspace containing your source code and features/
+  steps:
+    - name: behave
+      image: quay.io/rofrano/python:3.11-slim
+      workingDir: $(workspaces.source.path)
+      env:
+        - name: BASE_URL
+          value: $(params.BASE_URL)
+      script: |
+        #!/bin/bash
+        set -e
+        echo "===== Installing Dependencies ====="
+        pip install behave requests
+
+        echo "===== Running Behave Tests with BASE_URL=$BASE_URL ====="
+        behave
+
+
+
