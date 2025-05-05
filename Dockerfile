@@ -1,29 +1,29 @@
-##################################################
-# Create production image
-##################################################
 FROM python:3.11-slim
 
-# Set up the Python production environment
-WORKDIR /app
-COPY Pipfile Pipfile.lock ./
-RUN python -m pip install --upgrade pip pipenv && \
-    pipenv install --system --deploy && \
-    pip install psycopg2-binary  # 👈 Added to fix psycopg2 crash
+# System deps with cleanup
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends gcc python3-dev libpq-dev && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-# Copy the application contents
+WORKDIR /app
+
+# Copy CODE first for better caching
 COPY wsgi.py .
 COPY service/ ./service/
 
-# Switch to a non-root user and set file ownership
-RUN useradd --uid 1001 flask && \
-    chown -R flask /app
-USER flask
+# Copy dependencies LAST
+COPY Pipfile Pipfile.lock ./
 
-# Expose any ports the app is expecting in the environment
-ENV FLASK_APP="wsgi:app"
-ENV PORT=8080
-EXPOSE $PORT
+# Install with no cache
+RUN pip install --no-cache-dir --upgrade pip pipenv && \
+    pipenv install --system --deploy && \
+    pip install --no-cache-dir psycopg2-binary
 
-ENV GUNICORN_BIND=0.0.0.0:$PORT
+# Non-root setup
+RUN chmod 777 /app  # 👈 Temp permissions fix
+USER 1001
+
+EXPOSE 8080
 ENTRYPOINT ["gunicorn"]
 CMD ["--log-level=info", "wsgi:app"]
