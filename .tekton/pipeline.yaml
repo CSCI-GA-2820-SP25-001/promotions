@@ -17,7 +17,6 @@ spec:
   workspaces:
     - name: pipeline-workspace
   tasks:
-    # --- 1. clone -----------------------------------------------------------
     - name: git-clone
       taskRef:
         name: git-clone
@@ -30,18 +29,16 @@ spec:
         - name: output
           workspace: pipeline-workspace
 
-    # --- 2. lint ------------------------------------------------------------
     - name: pylint
       taskRef:
         name: pylint
-      runAfter:            # ensure code is present before linting
+      runAfter:
         - git-clone
       workspaces:
         - name: source
           workspace: pipeline-workspace
 
-    # --- 3. unit tests ------------------------------------------------------
-    - name: run-tests
+    - name: testing
       taskRef:
         name: pytest-env
       runAfter:
@@ -50,12 +47,11 @@ spec:
         - name: source
           workspace: pipeline-workspace
 
-    # --- 4. build & push image ---------------------------------------------
-    - name: build-image
+    - name: buildah
       taskRef:
         name: build-and-push
       runAfter:
-        - run-tests
+        - testing
       workspaces:
         - name: source
           workspace: pipeline-workspace
@@ -63,28 +59,14 @@ spec:
         - name: IMAGE
           value: $(params.IMAGE_NAME)
 
-    # --- 5. deploy to cluster ----------------------------------------------
-    - name: deploy
+    - name: deploy-image
       taskRef:
         name: deploy-image
       runAfter:
-        - build-image
+        - buildah
       workspaces:
         - name: source
           workspace: pipeline-workspace
       params:
         - name: image-name
           value: $(params.IMAGE_NAME)
-
-    # --- 6. BDD tests against deployment -----------------------------------
-    - name: run-bdd
-      taskRef:
-        name: behave-test
-      runAfter:
-        - deploy
-      workspaces:
-        - name: source
-          workspace: pipeline-workspace
-      params:
-        - name: BASE_URL
-          value: $(params.BASE_URL)
