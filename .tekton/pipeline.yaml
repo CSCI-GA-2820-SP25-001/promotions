@@ -17,7 +17,6 @@ spec:
   workspaces:
     - name: pipeline-workspace
   tasks:
-    # --- 1. clone -----------------------------------------------------------
     - name: git-clone
       taskRef:
         name: git-clone
@@ -30,17 +29,13 @@ spec:
         - name: output
           workspace: pipeline-workspace
 
-    # --- 2. lint ------------------------------------------------------------
     - name: pylint
       taskRef:
         name: pylint
-      runAfter:            # ensure code is present before linting
-        - git-clone
       workspaces:
         - name: source
           workspace: pipeline-workspace
 
-    # --- 3. unit tests ------------------------------------------------------
     - name: run-tests
       taskRef:
         name: pytest-env
@@ -49,8 +44,7 @@ spec:
       workspaces:
         - name: source
           workspace: pipeline-workspace
-
-    # --- 4. build & push image ---------------------------------------------
+    
     - name: build-image
       taskRef:
         name: build-and-push
@@ -62,8 +56,7 @@ spec:
       params:
         - name: IMAGE
           value: $(params.IMAGE_NAME)
-
-    # --- 5. deploy to cluster ----------------------------------------------
+    
     - name: deploy
       taskRef:
         name: deploy-image
@@ -76,7 +69,6 @@ spec:
         - name: image-name
           value: $(params.IMAGE_NAME)
 
-    # --- 6. BDD tests against deployment -----------------------------------
     - name: run-bdd
       taskRef:
         name: behave-test
@@ -88,3 +80,5 @@ spec:
       params:
         - name: BASE_URL
           value: $(params.BASE_URL)
+
+
